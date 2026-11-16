@@ -224,3 +224,120 @@ function doPost(e) {
     if (write) { try { lock.releaseLock(); } catch (x) {} }
   }
 }
+
+/* ===== 시트 꾸미기: 데이터는 그대로 두고 모양·입력 규칙만 정리해요. 여러 번 실행해도 괜찮아요. ===== */
+function 꾸미기() {
+  setup();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var NOTES = {
+    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 스페셜 / 간식 / 문구 중 하나','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','재고':'남은 수량. 주문되면 자동으로 줄어요','1인최대':'한 사람이 살 수 있는 최대 개수. 비워 두면 제한 없음','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에서 숨기기'},
+    users: {'이름':'학생이 입장할 때 쓰는 이름. 같은 이름 두 명은 안 돼요!','비밀번호':'초대장 번호','포인트':'남은 포인트. 주문하면 자동으로 줄어요'},
+    box:   {'등급':'1등, 2등 …','가중치':'숫자가 클수록 잘 나와요 (확률)','남은수량':'0이 되면 더 이상 안 나와요'},
+    roul:  {'칸':'룰렛 칸 번호 (순서)','남은수량':'0이 되면 회색 칸이 되고 안 나와요'},
+    orders:{'주문번호':'학생이 선생님께 보여주는 번호'},
+    wins:  {}
+  };
+  var THEME = {
+    items:{head:'#e5403a',band:'#fff1ef',tab:'#e5403a'}, users:{head:'#1f7a4d',band:'#eefbf2',tab:'#1f7a4d'},
+    orders:{head:'#b50005',band:'#fff6f0',tab:'#b50005'}, box:{head:'#ffc83d',band:'#fff9e3',tab:'#ffc83d'},
+    roul:{head:'#2fa36b',band:'#effaf3',tab:'#2fa36b'}, wins:{head:'#3a8dde',band:'#eef6ff',tab:'#3a8dde'}
+  };
+  var WIDTH = {'ID':110,'카테고리':80,'이름':170,'가격':90,'재고':70,'1인최대':70,'이미지':100,'판매':60,'비밀번호':90,'포인트':100,
+    '시간':120,'주문번호':100,'상품ID':100,'상품명':170,'수량':60,'단가':80,'금액':90,'주문후포인트':110,'등급':60,'가중치':70,'남은수량':80,'칸':50,'게임':80};
+  var money = '#,##0"원"', count = '#,##0"개"';
+
+  Object.keys(TAB_NAMES).forEach(function(k){
+    var sh = ss.getSheetByName(TAB_NAMES[k]); if (!sh) return;
+    var h = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    var n = h.length, rows = Math.max(sh.getMaxRows()-1, 1), t = THEME[k];
+    var col = function(name){ return h.indexOf(name) + 1; };
+    var body = function(name){ var c = col(name); return c ? sh.getRange(2, c, rows, 1) : null; };
+
+    sh.setTabColor(t.tab);
+    sh.setFrozenRows(1);
+    if (k === 'users' || k === 'items') sh.setFrozenColumns(k === 'items' ? 3 : 1);
+    var head = sh.getRange(1,1,1,n);
+    head.setBackground(t.head).setFontColor(k==='box' ? '#3a2420' : '#ffffff').setFontWeight('bold')
+        .setHorizontalAlignment('center').setVerticalAlignment('middle').setFontSize(11);
+    sh.setRowHeight(1, 34);
+    sh.getRange(2,1,rows,n).setVerticalAlignment('middle').setFontSize(11);
+    h.forEach(function(name, i){
+      if (WIDTH[name]) sh.setColumnWidth(i+1, WIDTH[name]);
+      var note = (NOTES[k]||{})[name]; if (note) sh.getRange(1,i+1).setNote(note);
+      if (['이름','상품명'].indexOf(name) < 0) sh.getRange(2,i+1,rows,1).setHorizontalAlignment('center');
+    });
+
+    // banding
+    sh.getBandings().forEach(function(b){ b.remove(); });
+    sh.getRange(1,1,sh.getMaxRows(),n).applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, true, false)
+      .setHeaderRowColor(t.head).setFirstRowColor('#ffffff').setSecondRowColor(t.band);
+
+    // number formats
+    ['가격','포인트','단가','금액','주문후포인트'].forEach(function(nm){ var r = body(nm); if (r) r.setNumberFormat(money); });
+    ['재고','남은수량'].forEach(function(nm){ var r = body(nm); if (r) r.setNumberFormat(count); });
+    if (k === 'users') { var pw = body('비밀번호'); if (pw) pw.setNumberFormat('@'); }
+
+    // input rules (stop text in number cells)
+    var num = SpreadsheetApp.newDataValidation().requireNumberGreaterThanOrEqualTo(0).setAllowInvalid(false)
+      .setHelpText('숫자만 넣어 주세요 (0 이상)').build();
+    ['가격','재고','1인최대','포인트','가중치','남은수량'].forEach(function(nm){
+      if (k==='orders'||k==='wins') return; var r = body(nm); if (r) r.setDataValidation(num);
+    });
+    if (k === 'items') {
+      var yn = body('판매'); if (yn) yn.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Y','N'], true).setAllowInvalid(false).build());
+      var cat = body('카테고리'); if (cat) cat.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['참가권','쿠폰','스페셜','간식','문구'], true).setAllowInvalid(true).build());
+    }
+    if (k === 'box') {
+      var gr = body('등급'); if (gr) gr.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['1등','2등','3등','4등','5등'], true).setAllowInvalid(true).build());
+    }
+
+    // colour rules
+    var rules = [];
+    var stockCol = col('재고') || col('남은수량');
+    if (stockCol && (k==='items'||k==='box'||k==='roul')) {
+      var L = String.fromCharCode(64 + stockCol), whole = sh.getRange(2,1,rows,n);
+      rules.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND($'+L+'2<>"",$'+L+'2<=0)').setBackground('#d9d9d9').setFontColor('#888888').setStrikethrough(true).setRanges([whole]).build());
+      rules.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND($'+L+'2<>"",$'+L+'2<=10)').setBackground('#ffd6d3').setFontColor('#b50005').setBold(true).setRanges([sh.getRange(2,stockCol,rows,1)]).build());
+    }
+    if (k === 'items') {
+      var sc = col('판매'); if (sc) { var Ls = String.fromCharCode(64+sc);
+        rules.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$'+Ls+'2="N"').setFontColor('#aaaaaa').setItalic(true).setRanges([sh.getRange(2,1,rows,n)]).build()); }
+    }
+    if (k === 'users') {
+      var pc = col('포인트'); if (pc) rules.push(SpreadsheetApp.newConditionalFormatRule().whenNumberLessThan(1000).setBackground('#fff3b0').setRanges([sh.getRange(2,pc,rows,1)]).build());
+    }
+    if (k === 'box' || k === 'wins') {
+      var gc = col('등급'); if (gc) { var Lg = String.fromCharCode(64+gc);
+        rules.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$'+Lg+'2="1등"').setBackground('#ffe066').setBold(true).setRanges([sh.getRange(2,1,rows,n)]).build()); }
+    }
+    sh.setConditionalFormatRules(rules);
+
+    // warn before editing the header row
+    sh.getProtections(SpreadsheetApp.ProtectionType.RANGE).forEach(function(p){ if (p.getDescription()==='제목줄') p.remove(); });
+    head.protect().setDescription('제목줄').setWarningOnly(true);
+  });
+
+  // 안내 tab
+  var g = ss.getSheetByName('안내') || ss.insertSheet('안내', 0);
+  g.clear(); g.setTabColor('#ffc83d'); g.setHiddenGridlines(true);
+  var lines = [
+    ['🎄 DYB 크리스마스 마켓 관리 시트'],[''],
+    ['📦 물품','가격·재고·1인최대·판매(Y/N)를 바꾸면 20초 안에 사이트에 반영돼요. 재고 10개 이하는 빨강, 0개는 회색이에요.'],
+    ['🧒 학생','이름·비밀번호(초대장 번호)·포인트. 같은 이름은 두 번 쓰지 마세요.'],
+    ['🧾 주문','사이트에서 주문하면 자동으로 쌓여요. 학생이 보여주는 주문번호로 확인하세요.'],
+    ['🎁 랜덤박스','가중치가 클수록 잘 나와요. 남은수량이 0이면 안 나와요. 1등은 노란 줄이에요.'],
+    ['🎡 룰렛','칸을 추가·삭제하면 룰렛 칸 수가 자동으로 바뀌어요.'],
+    ['🏆 당첨기록','룰렛·랜덤박스 결과가 자동으로 쌓여요.'],[''],
+    ['⚠️ 주의','탭 이름과 1행 제목은 바꾸지 마세요. 물품 ID와 학생 이름도 행사 중에는 바꾸지 마세요.'],
+    ['⚠️ 주의','주문·당첨기록 줄을 지우면 참가권이 되살아날 수 있어요. 연습 기록 정리할 때만 지우세요.'],
+    ['💡 팁','칸 위 제목에 마우스를 올리면 설명이 나와요. 행사 전에 [파일 → 사본 만들기]로 백업해 두세요.']
+  ];
+  lines.forEach(function(r,i){ g.getRange(i+1,1,1,r.length).setValues([r]); });
+  g.getRange('A1').setFontSize(20).setFontWeight('bold').setFontColor('#b50005');
+  g.getRange(3,1,lines.length-2,1).setFontWeight('bold').setFontSize(12);
+  g.getRange(3,2,lines.length-2,1).setFontSize(12).setWrap(true);
+  g.getRange('A10:B11').setBackground('#ffe9e7'); g.getRange('A12:B12').setBackground('#fff6d6');
+  g.setColumnWidth(1,120); g.setColumnWidth(2,620);
+  ss.setActiveSheet(g); ss.moveActiveSheet(1);
+  SpreadsheetApp.flush();
+}
