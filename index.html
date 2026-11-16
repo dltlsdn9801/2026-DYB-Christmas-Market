@@ -17,6 +17,9 @@ html,body{min-height:100%}
 body{font-family:'Jua',sans-serif;color:var(--ink);overflow-x:hidden;font-size:18px;
   background:var(--red) radial-gradient(rgba(255,255,255,.13) 2.5px,transparent 3.5px) 0 0/30px 30px;}
 button{font-family:'Jua',sans-serif;cursor:pointer;border:0;color:inherit}
+body{caret-color:transparent}
+input,textarea{caret-color:auto}
+.box-area,.box-area *,.gift,.tab,.btn,.card,.wheel-box{-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;outline:none}
 input{font-family:'Jua',sans-serif}
 img{max-width:100%;display:block}
 .hand{font-family:'Gaegu','Jua',sans-serif;font-weight:700}
@@ -102,16 +105,19 @@ img{max-width:100%;display:block}
 #app{position:relative;z-index:2;min-height:100vh;display:none}
 #app.on{display:block}
 .floaters span{position:fixed;z-index:0;pointer-events:none;opacity:.9;animation:floaty 6s ease-in-out infinite}
-header.top{background:#fff;position:relative;padding:22px 16px 26px;border-bottom:3px solid var(--line)}
+header.top{background:#fff;position:relative;padding:26px 16px 30px;border-bottom:3px solid var(--line)}
 header.top::before{content:"";position:absolute;left:0;right:0;top:0;height:10px;background:repeating-linear-gradient(45deg,var(--red) 0 14px,#fff 14px 28px)}
 header.top::after{content:"";position:absolute;left:0;right:0;bottom:-19px;height:16px;
   background:radial-gradient(circle at 12px -4px,#fff 13px,var(--line) 13.5px 16px,transparent 16.5px) 0 0/24px 16px;z-index:3}
 .top-in{max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:14px;justify-content:space-between}
-.top-in .land{height:62px;width:auto}
+.top-in .land{height:86px;width:auto}
 .top-in .dyb{height:42px;width:auto}
 .top-title{text-align:center;flex:1}
-.top-title h2{font-size:clamp(22px,4vw,38px);color:var(--deep);line-height:1.1;text-shadow:2px 2px 0 #ffd6d6}
-.top-title .date{display:inline-block;margin-top:5px;background:var(--green2);color:#fff;border:2.5px solid var(--line);border-radius:999px;padding:2px 14px 0;font-size:clamp(14px,2.4vw,17px)}
+.top-title h2{font-size:clamp(30px,6.4vw,64px);color:var(--red);line-height:1.02;letter-spacing:1px;
+  -webkit-text-stroke:2px var(--line);paint-order:stroke fill;text-shadow:0 5px 0 var(--line),0 9px 0 rgba(0,0,0,.12)}
+.top-title h2 .l1{display:block;font-size:.62em;color:var(--green2)}
+.top-title h2 .tr{display:inline-block;font-size:.7em;-webkit-text-stroke:0;text-shadow:none;vertical-align:middle;animation:wiggle 2s infinite}
+.top-title .date{display:inline-block;margin-top:12px;background:var(--green2);color:#fff;border:2.5px solid var(--line);border-radius:999px;padding:2px 14px 0;font-size:clamp(14px,2.4vw,17px)}
 @media (max-width:640px){.top-in .dyb{display:none}.top-in .land{height:44px}}
 
 .wallet{max-width:1100px;margin:30px auto 0;padding:0 14px;position:relative;z-index:3}
@@ -124,12 +130,12 @@ header.top::after{content:"";position:absolute;left:0;right:0;bottom:-19px;heigh
 .wallet .sp{flex:1}
 .preview-badge{background:#fff;border:2.5px dashed var(--deep);color:var(--deep);border-radius:12px;padding:2px 10px;font-size:14px}
 
-nav.tabs{position:sticky;top:0;z-index:50;padding:12px 10px 10px;margin-top:6px}
-.tabs-in{max-width:780px;margin:0 auto;display:flex;gap:10px;justify-content:center}
+nav.tabs{position:sticky;top:0;z-index:50;padding:16px 10px 12px;margin-top:6px;background:linear-gradient(var(--red) 70%,rgba(229,64,58,0))}
+.tabs-in{max-width:980px;margin:0 auto;display:flex;gap:10px;justify-content:center}
 .tab{flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:clamp(16px,3.4vw,23px);padding:6px 6px 4px;border-radius:22px;
   border:3px solid var(--line);box-shadow:0 5px 0 var(--line);transition:transform .15s;white-space:nowrap;position:relative}
 .tab img{width:clamp(34px,6vw,48px);height:clamp(34px,6vw,48px);object-fit:contain;margin-top:-14px}
-.tab[data-v=shop]{background:#ffd9d6}.tab[data-v=roulette]{background:#d3f3df}.tab[data-v=box]{background:#fff0bf}
+.tab[data-v=shop]{background:#ffd9d6}.tab[data-v=bonus]{background:#ffe1ec}.tab.on[data-v=bonus]{background:#ff8fab;color:#fff}.tab[data-v=roulette]{background:#d3f3df}.tab[data-v=box]{background:#fff0bf}
 .tab.on{transform:translateY(-4px) scale(1.04)}
 .tab.on[data-v=shop]{background:var(--red);color:#fff}.tab.on[data-v=roulette]{background:var(--green2);color:#fff}.tab.on[data-v=box]{background:var(--gold)}
 .tab.on img{animation:wiggle 1s infinite}
@@ -151,30 +157,30 @@ section.view.on{display:block}
 
 /* category headers */
 .cat{margin-top:36px}
-.cat-head{display:flex;align-items:flex-end;gap:8px;margin-bottom:16px}
+.cat-head{display:flex;align-items:flex-end;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .cat-head .who{width:clamp(80px,13vw,110px);filter:drop-shadow(0 4px 0 rgba(0,0,0,.2));animation:bob 2.6s ease-in-out infinite}
 .ribbon-title{position:relative;background:var(--cream);border:3px solid var(--line);border-radius:18px;padding:6px 18px 4px;box-shadow:0 5px 0 var(--line)}
 .ribbon-title h3{font-size:clamp(26px,4.6vw,34px);color:var(--deep);line-height:1.1}
 .ribbon-title p{font-size:16px;color:#7a5a4a}
-.bubble{position:relative;background:#fff;border:3px solid var(--line);border-radius:18px;padding:6px 12px 4px;font-size:17px;margin-bottom:58px;margin-left:-4px;max-width:220px}
+.bubble{position:relative;z-index:1;background:#fff;border:3px solid var(--line);border-radius:18px;padding:6px 12px 4px;font-size:17px;margin-bottom:58px;margin-left:-4px;max-width:220px}
 .bubble::before{content:"";position:absolute;left:-12px;bottom:10px;border:8px solid transparent;border-right:12px solid var(--line)}
 .bubble::after{content:"";position:absolute;left:-7px;bottom:12px;border:6px solid transparent;border-right:9px solid #fff}
 @media (max-width:640px){.bubble{display:none}}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:26px 20px;padding-top:10px}
 @media (max-width:480px){.grid{grid-template-columns:repeat(2,1fr);gap:14px}}
 .card{background:#fff;border:3px solid var(--line);border-radius:24px;padding:10px 10px 12px;text-align:center;box-shadow:0 6px 0 var(--line);position:relative;transition:transform .2s}
-.card:nth-child(odd){rotate:-1deg}.card:nth-child(even){rotate:1deg}
+.card:nth-child(odd){rotate:-.6deg}.card:nth-child(even){rotate:.6deg}
 .card:hover{transform:translateY(-6px);rotate:0deg}
 .card .pic{background:var(--cream);border-radius:18px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden;
   background-image:radial-gradient(rgba(229,64,58,.12) 2px,transparent 3px);background-size:16px 16px;position:relative}
-.card .pic img{max-height:86%;max-width:86%;object-fit:contain;border-radius:8px}
+.card .pic img{max-height:80%;max-width:80%;object-fit:contain;border-radius:12px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.12))}
 .card .name{font-size:clamp(16px,2.6vw,19px);margin-top:8px;line-height:1.2;min-height:2.4em;display:flex;align-items:center;justify-content:center}
 .tag{display:inline-block;position:relative;background:var(--gold);border:2.5px solid var(--line);border-radius:8px 14px 14px 8px;padding:2px 12px 0 18px;font-size:19px;margin-top:4px}
 .tag::before{content:"";position:absolute;left:5px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#fff;border:2px solid var(--line)}
 .stock{font-size:14px;color:#8a7a6a;margin-top:6px}
 .stock.low{color:var(--deep)}
-.limit-badge{position:absolute;top:8px;right:8px;background:var(--green2);color:#fff;border:2px solid var(--line);border-radius:999px;font-size:13px;padding:2px 8px 0;z-index:2}
+.limit-badge{position:absolute;top:-12px;right:8px;white-space:nowrap;background:var(--green2);color:#fff;border:2px solid var(--line);border-radius:999px;font-size:13px;padding:2px 8px 0;z-index:2}
 .soldout{position:absolute;inset:0;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;z-index:3}
 .soldout span{background:var(--deep);color:#fff;border:3px solid var(--line);border-radius:12px;font-size:24px;padding:4px 16px 2px;rotate:-12deg}
 .stepper{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
@@ -219,9 +225,10 @@ section.view.on{display:block}
 .ticket-chip{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:#fff;border:3px solid var(--line);border-radius:999px;padding:4px 16px 2px 6px;font-size:19px;box-shadow:0 3px 0 var(--line)}
 .ticket-chip img{width:56px}
 .ticket-chip b{font-weight:400;color:var(--deep);font-size:24px}
-.side-ch{position:absolute;width:clamp(80px,14vw,150px);animation:bob 2.4s ease-in-out infinite}
+.side-ch{position:absolute;width:clamp(80px,11vw,140px);animation:bob 2.4s ease-in-out infinite;pointer-events:none;z-index:0}
+.panel-wrap>*:not(.side-ch){position:relative;z-index:1}
 .side-ch.left{left:14px}.side-ch.right{right:14px;animation-delay:.7s}
-@media (max-width:700px){.side-ch{display:none}}
+@media (max-width:1000px){.side-ch{display:none}}
 
 .wheel-box{position:relative;width:min(430px,84vw);aspect-ratio:1;margin:30px auto 8px}
 #wheel{width:100%;height:100%;border-radius:50%;border:4px solid var(--line);box-shadow:0 0 0 10px var(--deep),0 0 0 13px var(--line),0 0 0 22px var(--gold),0 0 0 25px var(--line)}
@@ -234,15 +241,15 @@ section.view.on{display:block}
 .go{margin-top:22px;font-size:clamp(24px,5vw,30px);padding:12px 44px 10px}
 
 .box-row{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-top:6px}
-.box-area{position:relative;width:min(290px,66vw);height:min(290px,66vw);margin:30px auto 6px;cursor:pointer}
+.box-area{position:relative;width:min(420px,78vw);height:min(420px,78vw);margin:70px auto 10px;cursor:pointer}
 .gift{position:absolute;inset:0}
 .gift .body{position:absolute;bottom:0;left:7%;right:7%;height:62%;background:linear-gradient(90deg,#d8332d 0 42%,#ffc83d 42% 58%,#d8332d 58%);border:4px solid var(--line);border-radius:12px 12px 20px 20px;box-shadow:inset 0 -14px 0 rgba(0,0,0,.12),0 8px 0 var(--line)}
 .gift .body::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,#fff 3px,transparent 4px) 0 0/34px 34px;opacity:.55;border-radius:inherit}
 .gift .lid{position:absolute;bottom:58%;left:0;right:0;height:18%;background:linear-gradient(90deg,#e5403a 0 42%,#ffc83d 42% 58%,#e5403a 58%);border:4px solid var(--line);border-radius:14px;transition:transform .6s cubic-bezier(.3,1.6,.5,1),opacity .6s;z-index:2}
 .gift .bow{position:absolute;bottom:100%;left:50%;width:46%;height:70%;transform:translateX(-50%)}
-.gift .bow::before,.gift .bow::after{content:"";position:absolute;bottom:-4px;width:52%;height:140%;border:12px solid #ffc83d;outline:3px solid var(--line);outline-offset:-1px;border-radius:50%}
+.gift .bow::before,.gift .bow::after{content:"";position:absolute;bottom:-4px;width:52%;height:140%;border:16px solid #ffc83d;outline:3px solid var(--line);outline-offset:-1px;border-radius:50%}
 .gift .bow::before{left:-4%;transform:rotate(-28deg)}.gift .bow::after{right:-4%;transform:rotate(28deg)}
-.gift .q{position:absolute;left:50%;bottom:20%;transform:translateX(-50%);font-size:clamp(60px,14vw,90px);color:#fff;-webkit-text-stroke:3px var(--line);z-index:1}
+.gift .q{position:absolute;left:50%;bottom:17%;transform:translateX(-50%);font-size:clamp(80px,20vw,140px);pointer-events:none;color:#fff;-webkit-text-stroke:3px var(--line);z-index:1}
 .box-area:hover .gift{animation:wiggle .7s}
 .box-area.shake .gift{animation:shakeX .14s 6}
 .box-area.opened .lid{transform:translateY(-140px) rotate(-30deg);opacity:0}
@@ -261,7 +268,8 @@ section.view.on{display:block}
 .wlist li.first{background:linear-gradient(90deg,#fff3b0,#fff);border-radius:12px}
 .wlist .gr{flex:none;border:2px solid var(--line);border-radius:999px;font-size:13px;padding:2px 8px 0;background:var(--cream)}
 .wlist li.first .gr{background:var(--gold)}
-.wlist li img{width:42px;height:42px;object-fit:contain;flex:none}
+.wlist li img{width:42px;height:42px;object-fit:contain;flex:none;border-radius:8px}
+.wlist li span{min-width:0;overflow-wrap:anywhere}
 .wlist li .t{margin-left:auto;color:#b0a090;font-size:14px;flex:none}
 .wlist .empty{color:#aa9a8a;justify-content:center;border:0}
 
@@ -297,6 +305,9 @@ section.view.on{display:block}
 .prize-list li.jack .nm{font-size:24px;color:var(--deep)}
 .prize-list li.jack::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-50%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);animation:shine 2.2s infinite}
 @keyframes shine{to{left:120%}}
+.stk{display:table;margin-top:4px;border:2px solid var(--line);border-radius:999px;padding:1px 10px 0;font-size:14px}
+.stk.s100{background:#d3f3df;color:#1f7a4d}.stk.s70{background:#d6efff;color:#1565a0}.stk.s50{background:#fff0bf;color:#8a5a00}
+.stk.s30{background:#ffd9b3;color:#c04a00}.stk.s10{background:var(--red);color:#fff;animation:pulse .8s infinite}.stk.s0{background:#ddd;color:#888}
 .jack-banner{font-size:clamp(20px,5vw,28px);white-space:nowrap;color:var(--red);-webkit-text-stroke:1.5px var(--line);text-shadow:0 3px 0 var(--gold);margin-top:2px}
 
 @media (max-width:640px){
@@ -307,6 +318,59 @@ section.view.on{display:block}
   .rule ol{font-size:16px;padding-right:62px}.rule .mascot{width:62px}.rule h3{font-size:22px}
   .intro-logo{width:150px;top:44px}.sign{top:150px}.hint{font-size:12px}
   .cart-fab{font-size:17px;padding:4px 12px 2px 6px}.cart-fab img{width:42px;height:42px}
+}
+/* ---------------- BONUS ---------------- */
+.bonus-head{display:flex;align-items:center;gap:12px;background:var(--cream);border:3px solid var(--line);border-radius:26px;box-shadow:0 6px 0 var(--line);padding:10px 18px;max-width:760px;margin:6px auto 0}
+.bonus-head img{width:90px;flex:none;animation:bob 2.4s infinite}
+.bonus-head h3{font-size:clamp(26px,5vw,36px);color:var(--deep)}
+.bonus-head p{font-size:clamp(18px,3.6vw,22px)}
+.bonus-head b{color:var(--red);font-size:1.25em}
+.letter{max-width:760px;margin:34px auto 0;position:relative}
+.env{position:relative;height:70px;background:#ffb3c7;border:3px solid var(--line);border-bottom:0;border-radius:24px 24px 0 0;overflow:hidden}
+.env::before{content:"";position:absolute;left:-3px;right:-3px;top:-3px;height:140px;background:#ff8fab;border:3px solid var(--line);clip-path:polygon(0 0,100% 0,50% 52%)}
+.env .seal{position:absolute;left:50%;top:14px;transform:translateX(-50%);font-size:34px}
+.env .stamp{position:absolute;right:16px;top:8px;width:54px;height:54px;background:#fff;border:3px dashed var(--red);border-radius:6px;display:flex;align-items:center;justify-content:center;rotate:8deg}
+.env .stamp img{width:44px}
+.paper{position:relative;background:#fffdf6;border:3px solid var(--line);border-top:0;padding:22px 26px 14px 62px;
+  background-image:linear-gradient(90deg,transparent 46px,#ffb3c7 46px,#ffb3c7 49px,transparent 49px),repeating-linear-gradient(#fffdf6 0 39px,#cfe6ff 39px 41px);background-position:0 0,0 18px}
+.paper .to{font-size:24px;margin-bottom:6px}.paper .to b{color:var(--deep)}
+.paper textarea{width:100%;min-height:240px;border:0;background:transparent;resize:vertical;font-family:'Gaegu','Jua',sans-serif;font-weight:700;font-size:23px;line-height:40px;color:var(--ink);outline:none;padding:0}
+.paper .from{text-align:right;font-size:22px;margin-top:4px}
+.paper .from input{font-family:'Gaegu','Jua',sans-serif;font-weight:700;font-size:22px;width:150px;border:0;border-bottom:3px dashed var(--red);background:transparent;text-align:center;color:var(--ink);outline:none}
+.lcount{text-align:right;font-size:14px;color:#a99}
+.lfoot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;background:#ffe1ec;border:3px solid var(--line);border-top:0;border-radius:0 0 24px 24px;padding:12px 16px;box-shadow:0 6px 0 var(--line)}
+.lstatus{font-size:17px}
+.lstatus .ok{color:var(--green)}
+.letter.flyaway .paper,.letter.flyaway .env,.letter.flyaway .lfoot{animation:fly 1s forwards}
+@keyframes fly{40%{transform:scale(.9) rotate(-3deg)}100%{transform:translate(60vw,-60vh) scale(.2) rotate(30deg);opacity:0}}
+.board{max-width:760px;margin:46px auto 0;background:#fff;border:3px solid var(--line);border-radius:28px;box-shadow:0 6px 0 var(--line);overflow:hidden}
+.board-top{background:#efe9ff;border-bottom:3px solid var(--line);padding:16px 16px 10px;
+  background-image:radial-gradient(rgba(149,117,205,.18) 3px,transparent 4px);background-size:22px 22px}
+.board-top h3{font-size:clamp(24px,4.6vw,32px);color:#5e35b1}
+.board-top p{font-size:19px}
+.cform{display:flex;gap:8px;margin-top:10px}
+.cform input{flex:1;min-width:0;font-size:19px;padding:9px 14px 7px;border:3px solid var(--line);border-radius:16px;background:#fff;color:var(--ink)}
+.cform input:focus{outline:none;box-shadow:0 0 0 4px #c9b6ff}
+.crule{font-size:14px;color:#7a6a9a;margin-top:6px}
+.clist{list-style:none;padding:12px;max-height:620px;overflow:auto}
+.clist li{display:flex;gap:10px;align-items:flex-start;padding:8px 6px;animation:fadeup .4s}
+.clist li .av{width:48px;height:48px;flex:none;border-radius:50%;border:2.5px solid var(--line);background:var(--cream);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.clist li .av img{width:44px;margin-top:8px}
+.clist .cb{position:relative;background:#f7f4ff;border:2.5px solid var(--line);border-radius:4px 18px 18px 18px;padding:6px 12px 6px;font-size:18px;line-height:1.35;min-width:0;overflow-wrap:anywhere}
+.clist li.mine .cb{background:#fff3b0}
+.clist .meta{font-size:14px;color:#8a7aa8;margin-bottom:1px}
+.clist .meta .me{background:var(--gold);border:2px solid var(--line);border-radius:999px;padding:0 6px;color:var(--ink);margin-left:4px}
+.clist .empty{justify-content:center;color:#aaa;padding:20px}
+.clist li.sweep .cb{animation:sweep 1.4s forwards;background:#ffd6d3}
+.clist li.sweep .av{animation:sweep 1.4s forwards}
+@keyframes sweep{0%{transform:none}30%{transform:rotate(-4deg)}100%{transform:translateX(120%) rotate(25deg);opacity:0}}
+.broom{position:absolute;right:-6px;top:-22px;font-size:30px;animation:wiggle .3s infinite}
+@media (max-width:980px) and (min-width:641px){.tab{font-size:17px;gap:2px}.tab img{width:32px;height:32px;margin-top:-10px}}
+@media (max-width:640px){
+  .tabs-in{display:grid;grid-template-columns:1fr 1fr;gap:12px 8px}
+  .paper{padding:18px 14px 12px 40px;background-image:linear-gradient(90deg,transparent 28px,#ffb3c7 28px,#ffb3c7 31px,transparent 31px),repeating-linear-gradient(#fffdf6 0 39px,#cfe6ff 39px 41px)}
+  .paper textarea{font-size:20px}.bonus-head img{width:64px}
+  .top-in .land{height:52px}
 }
 #loading{position:fixed;inset:0;z-index:250;display:none;align-items:center;justify-content:center;background:rgba(255,248,236,.55)}
 #loading.on{display:flex}
@@ -386,7 +450,7 @@ footer{position:relative;z-index:2;margin-top:70px}
     <div class="top-in">
       <img class="land" src="img/ch/logo_land.webp" alt="DYB LAND">
       <div class="top-title">
-        <h2>🎄 DYB Christmas Market 🎄</h2>
+        <h2><span class="l1">DYB</span><span class="tr">🎄</span> Christmas Market <span class="tr">🎄</span></h2>
         <span class="date">12월 17일 ~ 19일</span>
       </div>
       <img class="dyb" src="img/ch/dyb.webp" alt="DYB English, the Window">
@@ -411,6 +475,7 @@ footer{position:relative;z-index:2;margin-top:70px}
       <button class="tab on" data-v="shop"><img src="img/xmas/hamster.webp" alt="">마켓</button>
       <button class="tab" data-v="roulette"><img src="img/xmas/whale.webp" alt="">룰렛 게임</button>
       <button class="tab" data-v="box"><img src="img/xmas/chick.webp" alt="">랜덤 박스</button>
+      <button class="tab" data-v="bonus"><img src="img/xmas/rabbit_flower.webp" alt="">추가 포인트 받기</button>
     </div>
   </nav>
 
@@ -422,7 +487,7 @@ footer{position:relative;z-index:2;margin-top:70px}
           <h3>Notice <small>상품 구매 시 유의사항</small></h3>
           <ol>
             <li>같은 가격의 물품은 <em>반드시 1개만</em> 구매 가능!</li>
-            <li>면제권은 6종 중 종류 상관없이 <em>2가지만</em> 구매 가능<span class="note">(선생님 사인 없는 쿠폰은 사용 불가!)</span></li>
+            <li>면제권은 <em>종류별로 1장씩만</em> 구매 가능<span class="note">(선생님 사인 없는 쿠폰은 사용 불가!)</span></li>
             <li>게임 참가권은 종류별로 <em>1인 3장</em>까지!</li>
           </ol>
           <img class="mascot" src="img/xmas/whale_books.webp" alt="">
@@ -478,12 +543,48 @@ footer{position:relative;z-index:2;margin-top:70px}
         </div>
         <span class="tap">👆 상자를 눌러요!</span>
         <div class="game-msg" id="boxMsg"></div>
-        <img class="side-ch left" style="top:260px" src="img/xmas/chick_cool.webp" alt="">
-        <img class="side-ch right" style="top:260px" src="img/xmas/cat_fish.webp" alt="">
+        <img class="side-ch left" style="top:330px" src="img/xmas/chick_cool.webp" alt="">
+        <img class="side-ch right" style="top:330px" src="img/xmas/cat_fish.webp" alt="">
         <div class="winners">
           <h4>🏆 랜덤박스 당첨자 명단</h4>
           <ul class="wlist" id="wlBox"></ul>
         </div>
+      </div>
+    </section>
+    <!-- BONUS -->
+    <section class="view" id="v-bonus">
+      <div class="bonus-head">
+        <img src="img/xmas/rabbit_flower.webp" alt="">
+        <div><h3>추가 포인트 받기 💝</h3><p class="hand">담임선생님께 편지를 쓰면 <b id="lpBig">1,000</b> 포인트를 받아요!</p></div>
+      </div>
+
+      <form class="letter" id="letterForm" autocomplete="off">
+        <div class="env"><span class="stamp"><img src="img/xmas/chick.webp" alt=""></span><span class="seal">💌</span></div>
+        <div class="paper">
+          <div class="to hand">To. <b id="toTeacher">담임</b> 선생님께</div>
+          <textarea id="lText" maxlength="600" placeholder="선생님께 하고 싶은 말을 적어 보세요 ✏️&#10;(10글자 이상)"></textarea>
+          <div class="from hand">From. <input id="lWriter" maxlength="12" placeholder="내 이름"> 올림</div>
+          <div class="lcount"><span id="lLen">0</span> / 600</div>
+        </div>
+        <div class="lfoot">
+          <span class="lstatus" id="lStatus"></span>
+          <button class="btn red" type="submit" id="lSend">💌 편지 보내기</button>
+        </div>
+        <div class="game-msg" id="lMsg"></div>
+      </form>
+
+      <div class="board">
+        <div class="board-top">
+          <h3>💬 DYB 칭찬 게시판</h3>
+          <p class="hand">DYB에서 좋았던 점, 이번 마켓데이에서 좋았던 점을 남겨 주세요!</p>
+          <form class="cform" id="cForm" autocomplete="off">
+            <input id="cText" maxlength="100" placeholder="예) 떡볶이가 정말 맛있었어요! 🌶️">
+            <button class="btn green" type="submit" id="cSend">남기기</button>
+          </form>
+          <div class="crule">※ 고운 말만 쓸 수 있어요. 나쁜 말을 쓰면 댓글이 바로 지워져요! · 1인 5개까지</div>
+          <div class="game-msg" id="cMsg"></div>
+        </div>
+        <ul class="clist" id="cList"></ul>
       </div>
     </section>
   </main>
@@ -542,7 +643,10 @@ let mockDB=null;
 function mockInit(){
   const obj=(h,r)=>{const o={};h.forEach((k,i)=>o[k]=r[i]);return o};
   mockDB={items:SEED.items.map(r=>obj(HEADERS.items,r)),users:SEED.users.map(r=>obj(HEADERS.users,r)),
-    box:SEED.box.map(r=>obj(HEADERS.box,r)),roul:SEED.roul.map(r=>obj(HEADERS.roul,r)),orders:[],wins:[]};
+    box:SEED.box.map(r=>obj(HEADERS.box,r)),roul:SEED.roul.map(r=>obj(HEADERS.roul,r)),orders:[],wins:[],letters:[],comments:[],banned:[]};
+  mockDB.users.forEach((u,i)=>{u['학년']=['4학년','5학년','6학년'][i%3];u['담임']=['박','최','이'][i%3]+'선생'});
+  [['이서연','떡볶이가 진짜 맛있었어요!! 또 해 주세요 🌶️'],['박지호','선생님들 항상 감사합니다 ❤️'],['최하은','룰렛 돌리는 거 너무 재밌어요ㅎㅎ']].forEach(([n,t],k)=>
+    mockDB.comments.push({'시간':`12/17 10:1${k}:00`,'학년':'','이름':n,'내용':t,'상태':'','학생코드':''}));
   // a few sample winners so the list isn't empty in preview
   [['이서연','랜덤박스','4등','다믈라 젤리','damla'],['박지호','룰렛','','떡볶이','tteok'],['최하은','랜덤박스','3등','크리스마스 연필','pencil']].forEach(([n,g,gr,p,i],k)=>{
     mockDB.wins.push({'시간':`12/17 10:0${k}:00`,'이름':n,'게임':g,'등급':gr,'상품명':p,'이미지':i});
@@ -557,9 +661,11 @@ async function api(action,extra={}){
     if(!mockDB) mockInit();
     await sleep(action==='state'?50:450);
     try{
-      const db=mockDB; db.newOrders=[]; db.newWins=[]; const res={ok:true};
+      const db=mockDB; db.newOrders=[]; db.newWins=[]; db.newLetters=[]; db.newComments=[]; const res={ok:true};
       if(action==='order') res.result=E_order(db,req,nowStr());
       else if(action==='play') res.result=E_play(db,req,nowStr(),Math.random);
+      else if(action==='letter') res.result=E_letter(db,req,nowStr());
+      else if(action==='comment') res.result=E_comment(db,req,nowStr());
       res.state=E_state(db,E_findUser(db,req.name,req.pw));
       return JSON.parse(JSON.stringify(res));
     }catch(e){return {ok:false,err:e.message}}
@@ -575,7 +681,7 @@ function loading(on,txt){ $('loading').classList.toggle('on',!!on); if(txt) $('l
 let me={name:'',pw:''}, S=null, cart={};
 const CATMETA={
   '참가권':{t:'Game Tickets',d:'룰렛·랜덤박스를 하려면 참가권이 필요해요',ch:'chick',say:'게임하려면 참가권! 1인 3장까지야!'},
-  '쿠폰':{t:'Coupons',d:'숙제·시험 면제권 (6종 중 2가지만!)',ch:'cat_fish',say:'선생님 사인 꼭 받아!'},
+  '쿠폰':{t:'Coupons',d:'숙제·시험 면제권 (종류별 1장씩!)',ch:'cat_fish',say:'선생님 사인 꼭 받아!'},
   '스페셜':{t:'Special Menu',d:'오늘만 맛볼 수 있는 특별 메뉴',ch:'whale',say:'따끈따끈 떡볶이 어때?'},
   '간식':{t:'Snack',d:'달콤 바삭 크리스마스 간식',ch:'hamster_magni',say:'냠냠, 뭐 먹을까?'},
   '문구':{t:'Stationery',d:'귀여운 크리스마스 문구',ch:'rabbit_flower',say:'크리스마스 문구 GET!'},
@@ -590,7 +696,7 @@ function applyState(st){
   $('tBox').textContent=st.user.tickets.box; $('tRoul').textContent=st.user.tickets.roul;
   // drop cart lines that no longer exist
   Object.keys(cart).forEach(id=>{ if(!st.items.find(i=>i.id===id)) delete cart[id]; });
-  renderShop(); renderCart(); renderWinners(); if(!spinning) drawWheel(0);
+  renderShop(); renderCart(); renderWinners(); renderBonus(); if(!spinning) drawWheel(0);
 }
 
 /* ================= SHOP ================= */
@@ -611,7 +717,7 @@ function renderShop(){
 }
 function cardHTML(it){
   const q=cart[it.id]||0, max=maxAddable(it), sold=it.stock<=0;
-  const limTxt=it.limit>0?`<span class="limit-badge">1인 ${it.limit}개 · ${it.mine}/${it.limit}</span>`:'';
+  const limTxt=it.limit>0?`<span class="limit-badge">${it.mine>=it.limit?'구매 완료 ✓':`1인 ${it.limit}개${it.limit>1?` · ${it.mine}/${it.limit}`:''}`}</span>`:'';
   return `<div class="card">${limTxt}
     <div class="pic"><img src="${imgSrc(it.img)}" alt="${esc(it.name)}" onerror="${IMG_FALLBACK}">${sold?'<div class="soldout"><span>품절</span></div>':''}</div>
     <div class="name">${esc(it.name)}</div>
@@ -673,7 +779,7 @@ function closeModal(){$('modal').classList.remove('on'); resetBox();}
 $('modal').addEventListener('click',e=>{ if(e.target.closest('[data-close]')||e.target===$('modal')) closeModal(); });
 
 /* ================= TABS ================= */
-const VIEWS=['shop','roulette','box'];
+const VIEWS=['shop','roulette','box','bonus'];
 function show(v){
   if(!VIEWS.includes(v)) v='shop';
   document.querySelectorAll('.view').forEach(e=>e.classList.toggle('on',e.id==='v-'+v));
@@ -686,7 +792,7 @@ window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
 
 /* ================= WINNERS ================= */
 function renderWinners(){
-  const li=w=>`<li class="${w.grade==='1등'?'first':''}">${w.grade?`<span class="gr">${esc(w.grade)}</span>`:''}<img src="${imgSrc(w.img)}" alt="" onerror="${IMG_FALLBACK}"><span><b style="font-weight:400;color:var(--deep)">${esc(w.name)}</b> → ${esc(w.prize)}</span><span class="t">${esc(w.t.slice(0,11))}</span></li>`;
+  const li=w=>`<li class="${w.grade==='1등'?'first':''}">${w.grade?`<span class="gr">${esc(w.grade)}</span>`:''}<img src="${imgSrc(w.img)}" alt="" onerror="${IMG_FALLBACK}"><span><b style="font-weight:400;color:var(--deep)">${esc(w.who)}</b> → ${esc(w.prize)}</span><span class="t">${esc(w.t.slice(0,11))}</span></li>`;
   const bx=S.wins.filter(w=>w.game==='랜덤박스'), rl=S.wins.filter(w=>w.game==='룰렛');
   $('wlBox').innerHTML=bx.length?bx.map(li).join(''):'<li class="empty">아직 당첨자가 없어요. 첫 주인공이 되어 봐!</li>';
   $('wlRoul').innerHTML=rl.length?rl.map(li).join(''):'<li class="empty">아직 당첨 소식이 없어요!</li>';
@@ -696,12 +802,23 @@ function renderWinners(){
 $('prizeBtn').onclick=()=>{
   const list=S.box;
   const html=list.map(p=>{const jack=p.grade==='1등';return `<li class="${jack?'jack':''}"><span class="gr">${esc(p.grade)}</span><img src="${imgSrc(p.img)}" alt="" onerror="${IMG_FALLBACK}">
-    <div class="nm">${esc(p.name)}<small>${p.left>0?(jack?`딱 ${p.left}명만!`:`남은 수량 ${p.left}개`):'모두 소진'}</small></div></li>`}).join('');
+    <div class="nm">${esc(p.name)}${jack?`<small>${p.left>0?`단 ${p.left}명만! 행운의 주인공은?`:'이미 주인공이 나왔어요!'}</small>`:stockTag(p)}</div></li>`}).join('');
   showModal(`<img class="peek" src="img/xmas/cat.webp" alt=""><div class="tada" style="font-size:32px">🎁 상자 속 선물 공개!</div>
     <div class="jack-banner">1등상 - 배달의 민족 3만원 권!!</div>
     <ul class="prize-list">${html}</ul><button class="btn red ok" data-close>두근두근! 닫기</button>`,false);
 };
 
+function stockTag(p){
+  const pct=p.init>0?p.left/p.init*100:0;
+  let c,t;
+  if(p.left<=0){c='s0';t='모두 소진 😢'}
+  else if(pct<=10){c='s10';t='마감 임박!! 🔥'}
+  else if(pct<=30){c='s30';t='얼마 안 남았어요!'}
+  else if(pct<=50){c='s50';t='절반 넘게 나갔어요!'}
+  else if(pct<=70){c='s70';t='인기 폭발 중!'}
+  else {c='s100';t='넉넉해요 😊'}
+  return `<span class="stk ${c}">${t}</span>`;
+}
 /* ================= RANDOM BOX ================= */
 const boxA=$('boxArea'); let opening=false;
 boxA.onclick=async()=>{
@@ -777,6 +894,63 @@ $('spinBtn').onclick=async function(){
   spinning=false; this.disabled=false;
   applyState(result.state); reveal(result.result.prize);
 };
+
+/* ================= BONUS: letter + comments ================= */
+const AV=['rabbit','whale','turtle','hamster','cat','chick'];
+function hashN(s){let h=0;for(const c of String(s))h=(h*31+c.charCodeAt(0))>>>0;return h}
+function josaName(n){
+  n=String(n||'').trim(); const g=n.length>=3&&/^[가-힣]+$/.test(n)?n.slice(1):n;
+  const c=g.charCodeAt(g.length-1); if(c>=0xAC00&&c<=0xD7A3) return g+((c-0xAC00)%28?'이의':'의');
+  return g+'의';
+}
+let lettersInit=false;
+function renderBonus(){
+  const L=S.letter||{sent:0,max:1,points:1000};
+  $('lpBig').textContent=won(L.points);
+  $('toTeacher').textContent=S.user.teacher||'담임';
+  if(!lettersInit){ $('lWriter').value=S.user.name; lettersInit=true; }
+  $('lStatus').innerHTML=L.sent<L.max?`처음 보내는 편지는 <b style="color:var(--red)">+${won(L.points)} 포인트</b>!`:`<span class="ok">✅ 편지 포인트는 이미 받았어요 (편지는 더 보낼 수 있어요)</span>`;
+  const C=S.comments||[];
+  $('cList').innerHTML=C.length?C.map(c=>`<li class="${c.mine?'mine':''}"><span class="av"><img src="img/xmas/${AV[hashN(c.who+c.t)%AV.length]}.webp" alt=""></span>
+    <div class="cb"><div class="meta">${esc(c.who)} · ${esc(c.t.slice(0,11))}${c.mine?'<span class="me">내 댓글</span>':''}</div>${esc(c.text)}</div></li>`).join('')
+    :'<li class="empty">첫 번째 칭찬을 남겨 주세요! 🎉</li>';
+}
+$('lText').addEventListener('input',()=>{$('lLen').textContent=Array.from($('lText').value).length});
+$('letterForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const text=$('lText').value.trim(), writer=$('lWriter').value.trim()||S.user.name;
+  if(Array.from(text).length<10){$('lMsg').textContent='편지를 조금만 더 길게 써 줄래? (10글자 이상) ✏️';return}
+  if(E_bad(text+' '+writer)){$('lMsg').textContent='고운 말로 다시 써 줄래? 🙏';return}
+  $('lMsg').textContent=''; $('lSend').disabled=true; loading(true,'편지를 배달하는 중... 📮');
+  const r=await api('letter',{text,writer}); loading(false); $('lSend').disabled=false;
+  if(!r.ok){$('lMsg').textContent=r.err; return}
+  $('letterForm').classList.add('flyaway');
+  setTimeout(()=>{ $('letterForm').classList.remove('flyaway'); $('lText').value=''; $('lLen').textContent='0'; applyState(r.state);
+    showModal(`<img class="peek" src="img/xmas/rabbit_flower.webp" alt=""><div class="tada" style="font-size:36px">💌 편지 도착!</div>
+      <p class="who" style="font-size:22px;margin-top:10px">${esc(josaName(r.result.writer))} 편지는<br>선생님께 전달드릴게요!</p>
+      ${r.result.reward?`<div class="ono" style="border-color:var(--green2);color:var(--green)">+ ${won(r.result.reward)} 포인트 💰</div>`:'<p class="who" style="font-size:16px;color:#9a7a6a">(편지 포인트는 이미 받았어요)</p>'}
+      <button class="btn red ok" data-close>확인</button>`,true);
+    burst(innerWidth/2,innerHeight/2,150); },900);
+});
+$('cForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const text=$('cText').value.trim(); if(!text) return;
+  $('cMsg').textContent=''; $('cSend').disabled=true;
+  if(E_bad(text)){ sweepBad(text); $('cSend').disabled=false; api('comment',{text}).then(r=>{ if(r.state) applyState(r.state); }); return; }
+  const r=await api('comment',{text}); $('cSend').disabled=false;
+  if(!r.ok){$('cMsg').textContent=r.err; return}
+  if(r.result&&r.result.bad){ sweepBad(text); applyState(r.state); return; }
+  $('cText').value=''; applyState(r.state);
+  const first=$('cList').querySelector('li'); if(first){first.scrollIntoView({block:'nearest',behavior:'smooth'})}
+});
+function sweepBad(text){
+  $('cText').value='';
+  const li=document.createElement('li'); li.className='sweep';
+  li.innerHTML=`<span class="av"><img src="img/xmas/cat_fish.webp" alt=""></span><div class="cb"><span class="broom">🧹</span><div class="meta">삭제 중...</div>${esc(text)}</div>`;
+  const ul=$('cList'); const empty=ul.querySelector('.empty'); if(empty) empty.remove(); ul.prepend(li);
+  setTimeout(()=>li.remove(),1500);
+  $('cMsg').textContent='나쁜 말이 있어서 댓글이 바로 지워졌어요 🧹 고운 말로 다시 써 줘!';
+}
 
 /* ================= INTRO ================= */
 (function(){

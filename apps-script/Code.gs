@@ -3,22 +3,28 @@ var HEADERS = {
   items:  ['ID','카테고리','이름','가격','재고','1인최대','이미지','판매'],
   users:  ['이름','비밀번호','포인트','학년','담임'],
   orders: ['시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
-  box:    ['등급','상품명','이미지','가중치','남은수량'],
+  box:    ['등급','상품명','이미지','가중치','남은수량','처음수량'],
   roul:   ['칸','상품명','이미지','남은수량'],
-  wins:   ['시간','이름','게임','등급','상품명','이미지','학생코드']
+  wins:   ['시간','이름','게임','등급','상품명','이미지','학생코드'],
+  letters:['시간','학년','담임','이름','편지에 쓴 이름','내용','지급포인트','학생코드'],
+  comments:['시간','학년','이름','내용','상태','학생코드'],
+  banned: ['금지어']
 };
-var TAB_NAMES = {items:'물품',users:'학생',orders:'주문',box:'랜덤박스',roul:'룰렛',wins:'당첨기록'};
+var TAB_NAMES = {items:'물품',users:'학생',orders:'주문',box:'랜덤박스',roul:'룰렛',wins:'당첨기록',letters:'편지',comments:'댓글',banned:'금지어'};
+var LETTER_POINTS = 1000;   // 편지 한 번에 주는 포인트
+var LETTER_MAX = 1;         // 포인트를 받을 수 있는 편지 수 (1인)
+var COMMENT_MAX = 5;        // 1인 댓글 최대 개수
 
 var SEED = {
   items: [
     ['ticket_box','참가권','랜덤박스 참가권',1000,100,3,'ticket_box','Y'],
     ['ticket_roul','참가권','룰렛 게임 참가권',1000,100,3,'ticket_roul','Y'],
-    ['c1','쿠폰','단어커트 +5',2500,100,'','c1','Y'],
-    ['c2','쿠폰','구두 면제권',3000,100,'','c2','Y'],
-    ['c3','쿠폰','온라인 숙제 면제권',3500,100,'','c3','Y'],
-    ['c4','쿠폰','한과목 숙제 면제권',4000,100,'','c4','Y'],
-    ['c5','쿠폰','재시험 면제권',4500,100,'','c5','Y'],
-    ['c6','쿠폰','전체 숙제 면제권',5000,100,'','c6','Y'],
+    ['c1','쿠폰','단어커트 +5',2500,100,1,'c1','Y'],
+    ['c2','쿠폰','구두 면제권',3000,100,1,'c2','Y'],
+    ['c3','쿠폰','온라인 숙제 면제권',3500,100,1,'c3','Y'],
+    ['c4','쿠폰','한과목 숙제 면제권',4000,100,1,'c4','Y'],
+    ['c5','쿠폰','재시험 면제권',4500,100,1,'c5','Y'],
+    ['c6','쿠폰','전체 숙제 면제권',5000,100,1,'c6','Y'],
     ['tteok','스페셜','떡볶이',3000,100,'','tteok','Y'],
     ['roulette','스페셜','돌려돌려 랜덤 룰렛',1500,100,'','roulette','Y'],
     ['damla','간식','다믈라 젤리',500,100,'','damla','Y'],
@@ -45,13 +51,13 @@ var SEED = {
     ['강서윤','1234',10000,'샘플',''],['조예준','1234',10000,'샘플',''],['윤지우','1234',10000,'샘플',''],['장시우','1234',10000,'샘플',''],['임하린','1234',10000,'샘플','']
   ],
   box: [
-    ['1등','배달의민족 3만원권','baemin',1,1],
-    ['2등','크리스마스 젤리 롤리팝','lollipop',4,100],
-    ['2등','크리스마스 불빛반지','ring',5,100],
-    ['3등','초코칩 미니','chocochip',15,100],
-    ['3등','크리스마스 연필','pencil',15,100],
-    ['3등','재미스 딸기쿠키','jam_straw',20,100],
-    ['4등','다믈라 젤리','damla',40,100]
+    ['1등','배달의민족 3만원권','baemin',1,1,1],
+    ['2등','크리스마스 젤리 롤리팝','lollipop',4,100,100],
+    ['2등','크리스마스 불빛반지','ring',5,100,100],
+    ['3등','초코칩 미니','chocochip',15,100,100],
+    ['3등','크리스마스 연필','pencil',15,100,100],
+    ['3등','재미스 딸기쿠키','jam_straw',20,100,100],
+    ['4등','다믈라 젤리','damla',40,100,100]
   ],
   roul: [
     [1,'떡볶이','tteok',100],[2,'다믈라 젤리','damla',100],[3,'크리스마스 연필','pencil',100],
@@ -62,6 +68,7 @@ var SEED = {
 function E_num(v){ var n = Number(v); return isNaN(n) ? 0 : n; }
 function E_str(v){ return v === null || v === undefined ? '' : String(v).trim(); }
 function E_mark(o,k){ (o._dirty = o._dirty || []).indexOf(k) < 0 && o._dirty.push(k); }
+function E_limit(i){ var l = E_num(i['1인최대']); return E_str(i['카테고리']) === '쿠폰' ? (l > 0 ? Math.min(l,1) : 1) : l; }
 function E_onSale(i){ return E_str(i['판매']).toUpperCase() !== 'N' && E_str(i['ID']) !== ''; }
 
 function E_pw(v){ return E_str(v).replace(/\s/g,'').toUpperCase(); }
@@ -89,13 +96,16 @@ function E_tickets(db, u){
 function E_state(db, u){
   var name = E_str(u['이름']);
   return {
-    user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u) },
+    user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u), grade: E_str(u['학년']), teacher: E_str(u['담임']) },
     items: db.items.filter(E_onSale).map(function(i){ var id=E_str(i['ID']); return {
       id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:E_num(i['재고']),
-      limit:E_num(i['1인최대']), img:E_str(i['이미지']), mine:E_bought(db,u,id) }; }),
-    box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:E_num(b['남은수량'])}; }),
+      limit:E_limit(i), img:E_str(i['이미지']), mine:E_bought(db,u,id) }; }),
+    box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
     roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
-    wins: db.wins.slice(-40).reverse().map(function(w){ return {t:E_str(w['시간']), name:E_str(w['이름']), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
+    wins: db.wins.slice(-60).reverse().map(function(w){ return {t:E_str(w['시간']), who:E_who(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
+    comments: db.comments.filter(function(c){ var st = E_str(c['상태']); return st !== '숨김' && st !== '자동삭제' && !E_bad(E_str(c['내용']), E_bannedList(db)); })
+      .slice(-60).reverse().map(function(c){ return {t:E_str(c['시간']), who:E_who(db,c), text:E_str(c['내용']), mine:E_isMe(c,u)}; }),
+    letter: { sent: db.letters.filter(function(l){ return E_isMe(l,u); }).length, max: LETTER_MAX, points: LETTER_POINTS },
     myOrders: db.orders.filter(function(o){ return E_isMe(o,u); }).slice(-30).reverse().map(function(o){ return {t:E_str(o['시간']), no:E_str(o['주문번호']), name:E_str(o['상품명']), qty:E_num(o['수량']), sum:E_num(o['금액'])}; })
   };
 }
@@ -107,7 +117,7 @@ function E_order(db, req, now){
   cart.forEach(function(c){
     var it = db.items.filter(function(i){ return E_str(i['ID']) === E_str(c.id) && E_onSale(i); })[0];
     if (!it) throw new Error('지금 팔지 않는 물건이 장바구니에 있어요.');
-    var q = Math.floor(E_num(c.qty)), stock = E_num(it['재고']), lim = E_num(it['1인최대']);
+    var q = Math.floor(E_num(c.qty)), stock = E_num(it['재고']), lim = E_limit(it);
     if (stock < q) throw new Error(E_str(it['이름']) + ' 재고가 부족해요! (남은 수량 ' + stock + '개)');
     if (lim > 0 && E_bought(db,u,E_str(it['ID'])) + q > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
     total += E_num(it['가격']) * q; lines.push({it:it, q:q});
@@ -145,13 +155,79 @@ function E_play(db, req, now, rand){
   return { index: idx, prize: { grade: E_str(row['등급']), name: E_str(row['상품명']), img: E_str(row['이미지']) } };
 }
 
+/* ---------- 이름 가리기 / 학년 ---------- */
+function E_mask(name){
+  var c = Array.from(E_str(name)); if (c.length <= 1) return c.join('');
+  if (c.length === 2) return c[0] + '*';
+  return c[0] + new Array(c.length - 1).join('*') + c[c.length-1];
+}
+function E_gradeOf(db, row){
+  var code = E_str(row['학생코드']), g = E_str(row['학년']);
+  if (!g) { var u = db.users.filter(function(x){ return code ? E_key(x) === code : E_str(x['이름']) === E_str(row['이름']); })[0]; g = u ? E_str(u['학년']) : ''; }
+  return /학년/.test(g) ? g : '';
+}
+function E_who(db, row){ var g = E_gradeOf(db, row); return E_mask(row['이름']) + (g ? ' (' + g + ')' : ''); }
+
+/* ---------- 비속어 필터 ---------- */
+var BAD_KO = ['시발','씨발','씨팔','시팔','씨빨','시빨','쓰발','쓰벌','씨벌','시벌','십알','씹','ㅅㅂ','ㅆㅂ','ㅅㅃ','ㅆㅃ','ㅅ발','시ㅂ','씨ㅂ','슈발','수발럼',
+  '병신','븅신','빙신','병쉰','ㅂㅅ','ㅄ','븅','존나','졸라','존내','졸래','ㅈㄴ','좆','좃','ㅈ같','지랄','ㅈㄹ','지럴','염병','옘병','ㅇㅂ',
+  '개새','개색','개세','개쉐','개섀','개샛','새끼','색끼','섀끼','쌔끼','ㅅㄲ','개같','개년','개놈','개소리','개빡','개좆','개씹',
+  '미친','미칀','미췬','ㅁㅊ','또라이','돌아이','도라이','ㄸㄹㅇ','꺼져','닥쳐','닥치','ㄲㅈ','ㄷㅊ','엿먹','엠창','니애미','니미','느금','니엄','애미','애비','에미','애자',
+  '찐따','장애인','등신','멍청','바보','쪼다','머저리','빡대가리','대가리','돼지새','뒤져','뒤지','죽어','죽을래','죽여','자살','꺼지',
+  '썅','쌍놈','쌍년','년아','놈아','니가뭔데','패드립','섹스','야동','젖꼭','sexy','엉덩이','변태','성기','일베','틀딱','한남','김치녀','메갈','급식충','맘충','충새끼',
+  'tlqkf','tlqk','qudtls','whssk','wlfkf','rotoRl','rotori','ehfdk','ckwl','alcls','tq'];
+var BAD_EN = ['fuck','fuk','fck','phuck','fvck','shit','sh1t','bitch','biatch','b1tch','asshole','bastard','cunt','motherf','dickhead','nigg','whore','slut','pussy','retard','faggot','bullshit','jackass','wanker','twat','douche','stfu','wtf','porn','penis','vagina','boob'];
+var BAD_EN_WORD = ['ass','dick','damn','hell','crap','sex','idiot','stupid','dumb','loser','ugly','shut up','kill','die','gay','fat','moron','suck','sucks','screw'];
+function E_bannedList(db){ return (db.banned || []).map(function(b){ return E_str(b['금지어']); }).filter(String); }
+function E_norm(t){
+  return String(t || '').toLowerCase()
+    .replace(/[@4]/g,'a').replace(/[$5]/g,'s').replace(/0/g,'o').replace(/[1!|]/g,'i').replace(/3/g,'e').replace(/7/g,'t')
+    .replace(/[^a-z가-힣ㄱ-ㅎㅏ-ㅣ]/g,'');
+}
+function E_bad(text, extra){
+  var raw = String(text || ''), n = E_norm(raw), rawLower = raw.toLowerCase(), ko = n.replace(/[a-z]/g,'');
+  var list = BAD_KO.concat(BAD_EN).concat(extra || []);
+  for (var i = 0; i < list.length; i++){ var w = E_norm(list[i]); if (!w) continue;
+    if (n.indexOf(w) >= 0 || ko.indexOf(w) >= 0) return true; }
+  var words = rawLower.replace(/[@4]/g,'a').replace(/[$5]/g,'s').replace(/0/g,'o').replace(/[1!]/g,'i').replace(/3/g,'e').replace(/[^a-z\s]/g,' ');
+  for (var j = 0; j < BAD_EN_WORD.length; j++){
+    if (new RegExp('(^|\\s)' + BAD_EN_WORD[j] + '(\\s|$)').test(words)) return true;
+  }
+  return false;
+}
+
+/* ---------- 편지 / 댓글 ---------- */
+function E_letter(db, req, now){
+  var u = E_findUser(db, req.name, req.pw), text = E_str(req.text), writer = E_str(req.writer) || E_str(u['이름']);
+  if (Array.from(text).length < 10) throw new Error('편지를 조금만 더 길게 써 줄래? (10글자 이상) ✏️');
+  if (Array.from(text).length > 600) throw new Error('편지가 너무 길어요! 600글자까지만 써 줘.');
+  if (E_bad(text + ' ' + writer, E_bannedList(db))) throw new Error('고운 말로 다시 써 줄래? 🙏');
+  var sent = db.letters.filter(function(l){ return E_isMe(l,u); }).length;
+  var reward = sent < LETTER_MAX ? LETTER_POINTS : 0;
+  if (reward) { u['포인트'] = E_num(u['포인트']) + reward; E_mark(u,'포인트'); }
+  var row = {'시간':now,'학년':E_str(u['학년']),'담임':E_str(u['담임']),'이름':E_str(u['이름']),'편지에 쓴 이름':writer,'내용':text,'지급포인트':reward,'학생코드':E_key(u)};
+  db.letters.push(row); (db.newLetters = db.newLetters || []).push(row);
+  return { reward: reward, writer: writer };
+}
+function E_comment(db, req, now){
+  var u = E_findUser(db, req.name, req.pw), text = E_str(req.text).replace(/\s+/g,' ');
+  if (Array.from(text).length < 2) throw new Error('댓글을 써 줘!');
+  if (Array.from(text).length > 100) throw new Error('댓글은 100글자까지만 쓸 수 있어요!');
+  var mine = db.comments.filter(function(c){ return E_isMe(c,u) && E_str(c['상태']) !== '자동삭제'; }).length;
+  var bad = E_bad(text, E_bannedList(db));
+  if (!bad && mine >= COMMENT_MAX) throw new Error('댓글은 한 사람당 ' + COMMENT_MAX + '개까지 쓸 수 있어요!');
+  var row = {'시간':now,'학년':E_str(u['학년']),'이름':E_str(u['이름']),'내용':text,'상태':bad ? '자동삭제' : '','학생코드':E_key(u)};
+  db.comments.push(row); (db.newComments = db.newComments || []).push(row);
+  return bad ? { bad: true, msg: '나쁜 말이 있어서 댓글이 바로 지워졌어요 🧹 고운 말로 다시 써 줘!' } : { bad: false };
+}
+
 /* ===== Google Apps Script 부분 (시트와 연결) ===== */
 
 /** 처음 한 번만 실행: 탭과 샘플 데이터를 만들어요. 이미 내용이 있는 탭은 건드리지 않아요. */
 function setup() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var seedFor = { items: SEED.items, users: SEED.users, orders: [], box: SEED.box, roul: SEED.roul, wins: [] };
-  var colors = { items:'#e5403a', users:'#1f7a4d', orders:'#b50005', box:'#ffc83d', roul:'#2fa36b', wins:'#7cc8ff' };
+  var seedFor = { items: SEED.items, users: SEED.users, orders: [], box: SEED.box, roul: SEED.roul, wins: [], letters: [], comments: [], banned: [] };
+  var colors = { items:'#e5403a', users:'#1f7a4d', orders:'#b50005', box:'#ffc83d', roul:'#2fa36b', wins:'#7cc8ff', letters:'#ff8fab', comments:'#9575cd', banned:'#616161' };
   Object.keys(TAB_NAMES).forEach(function(k){
     var sh = ss.getSheetByName(TAB_NAMES[k]) || ss.insertSheet(TAB_NAMES[k]);
     if (sh.getLastRow() > 0) { ensureCols_(sh, HEADERS[k]); return; }
@@ -173,6 +249,7 @@ function loadDB_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet(), db = { _sh:{}, _hdr:{}, newOrders:[], newWins:[] };
   Object.keys(TAB_NAMES).forEach(function(k){
     var sh = ss.getSheetByName(TAB_NAMES[k]);
+    if (!sh) { setup(); sh = ss.getSheetByName(TAB_NAMES[k]); }
     if (!sh) throw new Error('"' + TAB_NAMES[k] + '" 탭이 없어요. setup을 먼저 실행해 주세요.');
     var vals = sh.getDataRange().getValues(), h = vals[0].map(function(x){ return String(x).trim(); });
     db._sh[k] = sh; db._hdr[k] = h;
@@ -180,6 +257,8 @@ function loadDB_() {
       var o = { _r: i + 2 }; h.forEach(function(name, j){ o[name] = r[j]; }); return o;
     }).filter(function(o){ return h.some(function(name){ return o[name] !== '' && o[name] !== null; }); });
   });
+  // 랜덤박스 '처음수량'이 비어 있으면 지금 남은수량으로 채워요 (재고 퍼센트 계산용)
+  db.box.forEach(function(b){ if (E_str(b['처음수량']) === '' && E_str(b['상품명'])) { b['처음수량'] = E_num(b['남은수량']); var c = db._hdr.box.indexOf('처음수량') + 1; if (c > 0) db._sh.box.getRange(b._r, c).setValue(b['처음수량']); } });
   return db;
 }
 
@@ -192,7 +271,7 @@ function saveDB_(db) {
       });
     });
   });
-  [['orders', db.newOrders], ['wins', db.newWins]].forEach(function(p){
+  [['orders', db.newOrders], ['wins', db.newWins], ['letters', db.newLetters], ['comments', db.newComments]].forEach(function(p){
     var k = p[0], rows = p[1] || [];
     if (!rows.length) return;
     var h = db._hdr[k], sh = db._sh[k];
@@ -208,7 +287,7 @@ function doGet() { return json_({ ok: true, msg: 'DYB Christmas Market 연결 �
 function doPost(e) {
   var req;
   try { req = JSON.parse(e.postData.contents); } catch (x) { return json_({ ok:false, err:'잘못된 요청이에요.' }); }
-  var write = req.action === 'order' || req.action === 'play';
+  var write = ['order','play','letter','comment'].indexOf(req.action) >= 0;
   var lock = LockService.getScriptLock();
   try {
     if (write) lock.waitLock(25000);
@@ -220,6 +299,12 @@ function doPost(e) {
       res.state = E_state(db, E_findUser(db, req.name, req.pw));
     } else if (req.action === 'play') {
       res.result = E_play(db, req, now, Math.random); saveDB_(db);
+      res.state = E_state(db, E_findUser(db, req.name, req.pw));
+    } else if (req.action === 'letter') {
+      res.result = E_letter(db, req, now); saveDB_(db);
+      res.state = E_state(db, E_findUser(db, req.name, req.pw));
+    } else if (req.action === 'comment') {
+      res.result = E_comment(db, req, now); saveDB_(db);
       res.state = E_state(db, E_findUser(db, req.name, req.pw));
     } else throw new Error('알 수 없는 요청이에요.');
     return json_(res);
@@ -382,7 +467,10 @@ function 꾸미기() {
     box:   {'등급':'1등, 2등 …','가중치':'숫자가 클수록 잘 나와요 (확률)','남은수량':'0이 되면 더 이상 안 나와요'},
     roul:  {'칸':'룰렛 칸 번호 (순서)','남은수량':'0이 되면 회색 칸이 되고 안 나와요'},
     orders:{'주문번호':'학생이 선생님께 보여주는 번호'},
-    wins:  {}
+    wins:  {},
+    letters: {'내용':'학생이 담임선생님께 쓴 편지','지급포인트':'편지로 받은 포인트'},
+    comments: {'상태':'"숨김"이라고 쓰면 사이트에서 사라져요. "자동삭제"는 비속어로 자동으로 지워진 댓글이에요'},
+    banned: {'금지어':'여기에 단어를 추가하면 그 단어가 들어간 댓글·편지는 막혀요 (한 칸에 한 단어)'}
   };
   var THEME = {
     items:{head:'#e5403a',band:'#fff1ef',tab:'#e5403a'}, users:{head:'#1f7a4d',band:'#eefbf2',tab:'#1f7a4d'},
@@ -434,6 +522,13 @@ function 꾸미기() {
       var yn = body('판매'); if (yn) yn.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Y','N'], true).setAllowInvalid(false).build());
       var cat = body('카테고리'); if (cat) cat.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['참가권','쿠폰','스페셜','간식','문구'], true).setAllowInvalid(true).build());
     }
+    if (k === 'comments') {
+      var stc = body('상태'); if (stc) stc.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['','숨김','자동삭제'], true).setAllowInvalid(true).build());
+      var stl = col('상태'); if (stl) { var Lc = String.fromCharCode(64+stl);
+        sh.setConditionalFormatRules([SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=OR($'+Lc+'2="숨김",$'+Lc+'2="자동삭제")').setFontColor('#aaaaaa').setStrikethrough(true).setRanges([sh.getRange(2,1,rows,n)]).build()]); }
+    }
+    if (k === 'letters') { var ct = body('내용'); if (ct) { ct.setWrap(true).setHorizontalAlignment('left'); sh.setColumnWidth(col('내용'), 360); } }
+    if (k === 'comments') { var cc = body('내용'); if (cc) { cc.setWrap(true).setHorizontalAlignment('left'); sh.setColumnWidth(col('내용'), 320); } }
     if (k === 'box') {
       var gr = body('등급'); if (gr) gr.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['1등','2등','3등','4등','5등'], true).setAllowInvalid(true).build());
     }
@@ -457,7 +552,7 @@ function 꾸미기() {
       var gc = col('등급'); if (gc) { var Lg = String.fromCharCode(64+gc);
         rules.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$'+Lg+'2="1등"').setBackground('#ffe066').setBold(true).setRanges([sh.getRange(2,1,rows,n)]).build()); }
     }
-    sh.setConditionalFormatRules(rules);
+    if (k !== 'comments') sh.setConditionalFormatRules(rules);
 
     // warn before editing the header row
     sh.getProtections(SpreadsheetApp.ProtectionType.RANGE).forEach(function(p){ if (p.getDescription()==='제목줄') p.remove(); });
@@ -476,7 +571,9 @@ function 꾸미기() {
     ['🧾 주문','사이트에서 주문하면 자동으로 쌓여요. 학생이 보여주는 주문번호로 확인하세요.'],
     ['🎁 랜덤박스','가중치가 클수록 잘 나와요. 남은수량이 0이면 안 나와요. 1등은 노란 줄이에요.'],
     ['🎡 룰렛','칸을 추가·삭제하면 룰렛 칸 수가 자동으로 바뀌어요.'],
-    ['🏆 당첨기록','룰렛·랜덤박스 결과가 자동으로 쌓여요.'],[''],
+    ['🏆 당첨기록','룰렛·랜덤박스 결과가 자동으로 쌓여요.'],
+    ['💌 편지 / 💬 댓글','학생이 쓴 편지와 댓글이 쌓여요. 댓글 상태 칸에 "숨김"을 쓰면 사이트에서 사라져요.'],
+    ['🚫 금지어','여기에 단어를 추가하면 그 단어가 든 댓글·편지가 막혀요. (기본 비속어 필터는 이미 켜져 있어요)'],[''],
     ['⚠️ 주의','탭 이름과 1행 제목은 바꾸지 마세요. 물품 ID와 학생 이름도 행사 중에는 바꾸지 마세요.'],
     ['⚠️ 주의','주문·당첨기록 줄을 지우면 참가권이 되살아날 수 있어요. 연습 기록 정리할 때만 지우세요.'],
     ['💡 팁','칸 위 제목에 마우스를 올리면 설명이 나와요. 행사 전에 [파일 → 사본 만들기]로 백업해 두세요.']
@@ -485,7 +582,7 @@ function 꾸미기() {
   g.getRange('A1').setFontSize(20).setFontWeight('bold').setFontColor('#b50005');
   g.getRange(3,1,lines.length-2,1).setFontWeight('bold').setFontSize(12);
   g.getRange(3,2,lines.length-2,1).setFontSize(12).setWrap(true);
-  g.getRange('A12:B13').setBackground('#ffe9e7'); g.getRange('A14:B14').setBackground('#fff6d6'); g.getRange('A5:B6').setBackground('#eef6ff');
+  g.getRange('A14:B15').setBackground('#ffe9e7'); g.getRange('A16:B16').setBackground('#fff6d6'); g.getRange('A5:B6').setBackground('#eef6ff');
   g.setColumnWidth(1,120); g.setColumnWidth(2,620);
   ss.setActiveSheet(g); ss.moveActiveSheet(1);
   SpreadsheetApp.flush();

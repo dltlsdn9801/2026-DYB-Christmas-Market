@@ -3,22 +3,28 @@ var HEADERS = {
   items:  ['ID','카테고리','이름','가격','재고','1인최대','이미지','판매'],
   users:  ['이름','비밀번호','포인트','학년','담임'],
   orders: ['시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
-  box:    ['등급','상품명','이미지','가중치','남은수량'],
+  box:    ['등급','상품명','이미지','가중치','남은수량','처음수량'],
   roul:   ['칸','상품명','이미지','남은수량'],
-  wins:   ['시간','이름','게임','등급','상품명','이미지','학생코드']
+  wins:   ['시간','이름','게임','등급','상품명','이미지','학생코드'],
+  letters:['시간','학년','담임','이름','편지에 쓴 이름','내용','지급포인트','학생코드'],
+  comments:['시간','학년','이름','내용','상태','학생코드'],
+  banned: ['금지어']
 };
-var TAB_NAMES = {items:'물품',users:'학생',orders:'주문',box:'랜덤박스',roul:'룰렛',wins:'당첨기록'};
+var TAB_NAMES = {items:'물품',users:'학생',orders:'주문',box:'랜덤박스',roul:'룰렛',wins:'당첨기록',letters:'편지',comments:'댓글',banned:'금지어'};
+var LETTER_POINTS = 1000;   // 편지 한 번에 주는 포인트
+var LETTER_MAX = 1;         // 포인트를 받을 수 있는 편지 수 (1인)
+var COMMENT_MAX = 5;        // 1인 댓글 최대 개수
 
 var SEED = {
   items: [
     ['ticket_box','참가권','랜덤박스 참가권',1000,100,3,'ticket_box','Y'],
     ['ticket_roul','참가권','룰렛 게임 참가권',1000,100,3,'ticket_roul','Y'],
-    ['c1','쿠폰','단어커트 +5',2500,100,'','c1','Y'],
-    ['c2','쿠폰','구두 면제권',3000,100,'','c2','Y'],
-    ['c3','쿠폰','온라인 숙제 면제권',3500,100,'','c3','Y'],
-    ['c4','쿠폰','한과목 숙제 면제권',4000,100,'','c4','Y'],
-    ['c5','쿠폰','재시험 면제권',4500,100,'','c5','Y'],
-    ['c6','쿠폰','전체 숙제 면제권',5000,100,'','c6','Y'],
+    ['c1','쿠폰','단어커트 +5',2500,100,1,'c1','Y'],
+    ['c2','쿠폰','구두 면제권',3000,100,1,'c2','Y'],
+    ['c3','쿠폰','온라인 숙제 면제권',3500,100,1,'c3','Y'],
+    ['c4','쿠폰','한과목 숙제 면제권',4000,100,1,'c4','Y'],
+    ['c5','쿠폰','재시험 면제권',4500,100,1,'c5','Y'],
+    ['c6','쿠폰','전체 숙제 면제권',5000,100,1,'c6','Y'],
     ['tteok','스페셜','떡볶이',3000,100,'','tteok','Y'],
     ['roulette','스페셜','돌려돌려 랜덤 룰렛',1500,100,'','roulette','Y'],
     ['damla','간식','다믈라 젤리',500,100,'','damla','Y'],
@@ -45,13 +51,13 @@ var SEED = {
     ['강서윤','1234',10000,'샘플',''],['조예준','1234',10000,'샘플',''],['윤지우','1234',10000,'샘플',''],['장시우','1234',10000,'샘플',''],['임하린','1234',10000,'샘플','']
   ],
   box: [
-    ['1등','배달의민족 3만원권','baemin',1,1],
-    ['2등','크리스마스 젤리 롤리팝','lollipop',4,100],
-    ['2등','크리스마스 불빛반지','ring',5,100],
-    ['3등','초코칩 미니','chocochip',15,100],
-    ['3등','크리스마스 연필','pencil',15,100],
-    ['3등','재미스 딸기쿠키','jam_straw',20,100],
-    ['4등','다믈라 젤리','damla',40,100]
+    ['1등','배달의민족 3만원권','baemin',1,1,1],
+    ['2등','크리스마스 젤리 롤리팝','lollipop',4,100,100],
+    ['2등','크리스마스 불빛반지','ring',5,100,100],
+    ['3등','초코칩 미니','chocochip',15,100,100],
+    ['3등','크리스마스 연필','pencil',15,100,100],
+    ['3등','재미스 딸기쿠키','jam_straw',20,100,100],
+    ['4등','다믈라 젤리','damla',40,100,100]
   ],
   roul: [
     [1,'떡볶이','tteok',100],[2,'다믈라 젤리','damla',100],[3,'크리스마스 연필','pencil',100],
@@ -62,6 +68,7 @@ var SEED = {
 function E_num(v){ var n = Number(v); return isNaN(n) ? 0 : n; }
 function E_str(v){ return v === null || v === undefined ? '' : String(v).trim(); }
 function E_mark(o,k){ (o._dirty = o._dirty || []).indexOf(k) < 0 && o._dirty.push(k); }
+function E_limit(i){ var l = E_num(i['1인최대']); return E_str(i['카테고리']) === '쿠폰' ? (l > 0 ? Math.min(l,1) : 1) : l; }
 function E_onSale(i){ return E_str(i['판매']).toUpperCase() !== 'N' && E_str(i['ID']) !== ''; }
 
 function E_pw(v){ return E_str(v).replace(/\s/g,'').toUpperCase(); }
@@ -89,13 +96,16 @@ function E_tickets(db, u){
 function E_state(db, u){
   var name = E_str(u['이름']);
   return {
-    user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u) },
+    user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u), grade: E_str(u['학년']), teacher: E_str(u['담임']) },
     items: db.items.filter(E_onSale).map(function(i){ var id=E_str(i['ID']); return {
       id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:E_num(i['재고']),
-      limit:E_num(i['1인최대']), img:E_str(i['이미지']), mine:E_bought(db,u,id) }; }),
-    box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:E_num(b['남은수량'])}; }),
+      limit:E_limit(i), img:E_str(i['이미지']), mine:E_bought(db,u,id) }; }),
+    box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
     roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
-    wins: db.wins.slice(-40).reverse().map(function(w){ return {t:E_str(w['시간']), name:E_str(w['이름']), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
+    wins: db.wins.slice(-60).reverse().map(function(w){ return {t:E_str(w['시간']), who:E_who(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
+    comments: db.comments.filter(function(c){ var st = E_str(c['상태']); return st !== '숨김' && st !== '자동삭제' && !E_bad(E_str(c['내용']), E_bannedList(db)); })
+      .slice(-60).reverse().map(function(c){ return {t:E_str(c['시간']), who:E_who(db,c), text:E_str(c['내용']), mine:E_isMe(c,u)}; }),
+    letter: { sent: db.letters.filter(function(l){ return E_isMe(l,u); }).length, max: LETTER_MAX, points: LETTER_POINTS },
     myOrders: db.orders.filter(function(o){ return E_isMe(o,u); }).slice(-30).reverse().map(function(o){ return {t:E_str(o['시간']), no:E_str(o['주문번호']), name:E_str(o['상품명']), qty:E_num(o['수량']), sum:E_num(o['금액'])}; })
   };
 }
@@ -107,7 +117,7 @@ function E_order(db, req, now){
   cart.forEach(function(c){
     var it = db.items.filter(function(i){ return E_str(i['ID']) === E_str(c.id) && E_onSale(i); })[0];
     if (!it) throw new Error('지금 팔지 않는 물건이 장바구니에 있어요.');
-    var q = Math.floor(E_num(c.qty)), stock = E_num(it['재고']), lim = E_num(it['1인최대']);
+    var q = Math.floor(E_num(c.qty)), stock = E_num(it['재고']), lim = E_limit(it);
     if (stock < q) throw new Error(E_str(it['이름']) + ' 재고가 부족해요! (남은 수량 ' + stock + '개)');
     if (lim > 0 && E_bought(db,u,E_str(it['ID'])) + q > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
     total += E_num(it['가격']) * q; lines.push({it:it, q:q});
@@ -143,4 +153,70 @@ function E_play(db, req, now, rand){
   var w = {'시간':now,'이름':name,'게임':game,'등급':E_str(row['등급']),'상품명':E_str(row['상품명']),'이미지':E_str(row['이미지']),'학생코드':E_key(u)};
   db.wins.push(w); (db.newWins = db.newWins || []).push(w);
   return { index: idx, prize: { grade: E_str(row['등급']), name: E_str(row['상품명']), img: E_str(row['이미지']) } };
+}
+
+/* ---------- 이름 가리기 / 학년 ---------- */
+function E_mask(name){
+  var c = Array.from(E_str(name)); if (c.length <= 1) return c.join('');
+  if (c.length === 2) return c[0] + '*';
+  return c[0] + new Array(c.length - 1).join('*') + c[c.length-1];
+}
+function E_gradeOf(db, row){
+  var code = E_str(row['학생코드']), g = E_str(row['학년']);
+  if (!g) { var u = db.users.filter(function(x){ return code ? E_key(x) === code : E_str(x['이름']) === E_str(row['이름']); })[0]; g = u ? E_str(u['학년']) : ''; }
+  return /학년/.test(g) ? g : '';
+}
+function E_who(db, row){ var g = E_gradeOf(db, row); return E_mask(row['이름']) + (g ? ' (' + g + ')' : ''); }
+
+/* ---------- 비속어 필터 ---------- */
+var BAD_KO = ['시발','씨발','씨팔','시팔','씨빨','시빨','쓰발','쓰벌','씨벌','시벌','십알','씹','ㅅㅂ','ㅆㅂ','ㅅㅃ','ㅆㅃ','ㅅ발','시ㅂ','씨ㅂ','슈발','수발럼',
+  '병신','븅신','빙신','병쉰','ㅂㅅ','ㅄ','븅','존나','졸라','존내','졸래','ㅈㄴ','좆','좃','ㅈ같','지랄','ㅈㄹ','지럴','염병','옘병','ㅇㅂ',
+  '개새','개색','개세','개쉐','개섀','개샛','새끼','색끼','섀끼','쌔끼','ㅅㄲ','개같','개년','개놈','개소리','개빡','개좆','개씹',
+  '미친','미칀','미췬','ㅁㅊ','또라이','돌아이','도라이','ㄸㄹㅇ','꺼져','닥쳐','닥치','ㄲㅈ','ㄷㅊ','엿먹','엠창','니애미','니미','느금','니엄','애미','애비','에미','애자',
+  '찐따','장애인','등신','멍청','바보','쪼다','머저리','빡대가리','대가리','돼지새','뒤져','뒤지','죽어','죽을래','죽여','자살','꺼지',
+  '썅','쌍놈','쌍년','년아','놈아','니가뭔데','패드립','섹스','야동','젖꼭','sexy','엉덩이','변태','성기','일베','틀딱','한남','김치녀','메갈','급식충','맘충','충새끼',
+  'tlqkf','tlqk','qudtls','whssk','wlfkf','rotoRl','rotori','ehfdk','ckwl','alcls','tq'];
+var BAD_EN = ['fuck','fuk','fck','phuck','fvck','shit','sh1t','bitch','biatch','b1tch','asshole','bastard','cunt','motherf','dickhead','nigg','whore','slut','pussy','retard','faggot','bullshit','jackass','wanker','twat','douche','stfu','wtf','porn','penis','vagina','boob'];
+var BAD_EN_WORD = ['ass','dick','damn','hell','crap','sex','idiot','stupid','dumb','loser','ugly','shut up','kill','die','gay','fat','moron','suck','sucks','screw'];
+function E_bannedList(db){ return (db.banned || []).map(function(b){ return E_str(b['금지어']); }).filter(String); }
+function E_norm(t){
+  return String(t || '').toLowerCase()
+    .replace(/[@4]/g,'a').replace(/[$5]/g,'s').replace(/0/g,'o').replace(/[1!|]/g,'i').replace(/3/g,'e').replace(/7/g,'t')
+    .replace(/[^a-z가-힣ㄱ-ㅎㅏ-ㅣ]/g,'');
+}
+function E_bad(text, extra){
+  var raw = String(text || ''), n = E_norm(raw), rawLower = raw.toLowerCase(), ko = n.replace(/[a-z]/g,'');
+  var list = BAD_KO.concat(BAD_EN).concat(extra || []);
+  for (var i = 0; i < list.length; i++){ var w = E_norm(list[i]); if (!w) continue;
+    if (n.indexOf(w) >= 0 || ko.indexOf(w) >= 0) return true; }
+  var words = rawLower.replace(/[@4]/g,'a').replace(/[$5]/g,'s').replace(/0/g,'o').replace(/[1!]/g,'i').replace(/3/g,'e').replace(/[^a-z\s]/g,' ');
+  for (var j = 0; j < BAD_EN_WORD.length; j++){
+    if (new RegExp('(^|\\s)' + BAD_EN_WORD[j] + '(\\s|$)').test(words)) return true;
+  }
+  return false;
+}
+
+/* ---------- 편지 / 댓글 ---------- */
+function E_letter(db, req, now){
+  var u = E_findUser(db, req.name, req.pw), text = E_str(req.text), writer = E_str(req.writer) || E_str(u['이름']);
+  if (Array.from(text).length < 10) throw new Error('편지를 조금만 더 길게 써 줄래? (10글자 이상) ✏️');
+  if (Array.from(text).length > 600) throw new Error('편지가 너무 길어요! 600글자까지만 써 줘.');
+  if (E_bad(text + ' ' + writer, E_bannedList(db))) throw new Error('고운 말로 다시 써 줄래? 🙏');
+  var sent = db.letters.filter(function(l){ return E_isMe(l,u); }).length;
+  var reward = sent < LETTER_MAX ? LETTER_POINTS : 0;
+  if (reward) { u['포인트'] = E_num(u['포인트']) + reward; E_mark(u,'포인트'); }
+  var row = {'시간':now,'학년':E_str(u['학년']),'담임':E_str(u['담임']),'이름':E_str(u['이름']),'편지에 쓴 이름':writer,'내용':text,'지급포인트':reward,'학생코드':E_key(u)};
+  db.letters.push(row); (db.newLetters = db.newLetters || []).push(row);
+  return { reward: reward, writer: writer };
+}
+function E_comment(db, req, now){
+  var u = E_findUser(db, req.name, req.pw), text = E_str(req.text).replace(/\s+/g,' ');
+  if (Array.from(text).length < 2) throw new Error('댓글을 써 줘!');
+  if (Array.from(text).length > 100) throw new Error('댓글은 100글자까지만 쓸 수 있어요!');
+  var mine = db.comments.filter(function(c){ return E_isMe(c,u) && E_str(c['상태']) !== '자동삭제'; }).length;
+  var bad = E_bad(text, E_bannedList(db));
+  if (!bad && mine >= COMMENT_MAX) throw new Error('댓글은 한 사람당 ' + COMMENT_MAX + '개까지 쓸 수 있어요!');
+  var row = {'시간':now,'학년':E_str(u['학년']),'이름':E_str(u['이름']),'내용':text,'상태':bad ? '자동삭제' : '','학생코드':E_key(u)};
+  db.comments.push(row); (db.newComments = db.newComments || []).push(row);
+  return bad ? { bad: true, msg: '나쁜 말이 있어서 댓글이 바로 지워졌어요 🧹 고운 말로 다시 써 줘!' } : { bad: false };
 }
