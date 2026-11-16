@@ -1,11 +1,11 @@
 /* ===== DYB Christmas Market — shared rules (used by the website preview AND the Google Apps Script) ===== */
 var HEADERS = {
   items:  ['ID','카테고리','이름','가격','재고','1인최대','이미지','판매'],
-  users:  ['이름','비밀번호','포인트'],
-  orders: ['시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트'],
+  users:  ['이름','비밀번호','포인트','학년','담임'],
+  orders: ['시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
   box:    ['등급','상품명','이미지','가중치','남은수량'],
   roul:   ['칸','상품명','이미지','남은수량'],
-  wins:   ['시간','이름','게임','등급','상품명','이미지']
+  wins:   ['시간','이름','게임','등급','상품명','이미지','학생코드']
 };
 var TAB_NAMES = {items:'물품',users:'학생',orders:'주문',box:'랜덤박스',roul:'룰렛',wins:'당첨기록'};
 
@@ -41,8 +41,8 @@ var SEED = {
     ['charpen','문구','크리스마스 4색 볼펜',5000,100,'','charpen','Y']
   ],
   users: [
-    ['김민준','1234',10000],['이서연','1234',10000],['박지호','1234',10000],['최하은','1234',10000],['정도윤','1234',10000],
-    ['강서윤','1234',10000],['조예준','1234',10000],['윤지우','1234',10000],['장시우','1234',10000],['임하린','1234',10000]
+    ['김민준','1234',10000,'샘플',''],['이서연','1234',10000,'샘플',''],['박지호','1234',10000,'샘플',''],['최하은','1234',10000,'샘플',''],['정도윤','1234',10000,'샘플',''],
+    ['강서윤','1234',10000,'샘플',''],['조예준','1234',10000,'샘플',''],['윤지우','1234',10000,'샘플',''],['장시우','1234',10000,'샘플',''],['임하린','1234',10000,'샘플','']
   ],
   box: [
     ['1등','배달의민족 3만원권','baemin',1,1],
@@ -64,35 +64,39 @@ function E_str(v){ return v === null || v === undefined ? '' : String(v).trim();
 function E_mark(o,k){ (o._dirty = o._dirty || []).indexOf(k) < 0 && o._dirty.push(k); }
 function E_onSale(i){ return E_str(i['판매']).toUpperCase() !== 'N' && E_str(i['ID']) !== ''; }
 
+function E_pw(v){ return E_str(v).replace(/\s/g,'').toUpperCase(); }
+function E_key(u){ return E_str(u['이름']) + '|' + E_pw(u['비밀번호']); }
+function E_isMe(row, u){ var c = E_str(row['학생코드']); return c ? c === E_key(u) : E_str(row['이름']) === E_str(u['이름']); }
 function E_findUser(db, name, pw){
-  name = E_str(name);
-  var u = db.users.filter(function(x){ return E_str(x['이름']) === name; })[0];
+  name = E_str(name); pw = E_pw(pw);
   if (!name) throw new Error('이름을 적어 줘!');
-  if (!u) throw new Error('명단에 없는 이름이에요. 선생님께 확인해 주세요!');
-  if (E_str(u['비밀번호']) !== E_str(pw)) throw new Error('초대장 번호가 틀렸어요!');
+  var same = db.users.filter(function(x){ return E_str(x['이름']) === name; });
+  if (!same.length) throw new Error('명단에 없는 이름이에요. 선생님께 확인해 주세요!');
+  var u = same.filter(function(x){ return E_pw(x['비밀번호']) === pw; })[0];
+  if (!u) throw new Error('초대장 번호가 틀렸어요!');
   return u;
 }
-function E_bought(db, name, id){
-  return db.orders.reduce(function(s,o){ return (E_str(o['이름'])===name && E_str(o['상품ID'])===id) ? s + E_num(o['수량']) : s; }, 0);
+function E_bought(db, u, id){
+  return db.orders.reduce(function(s,o){ return (E_isMe(o,u) && E_str(o['상품ID'])===id) ? s + E_num(o['수량']) : s; }, 0);
 }
-function E_used(db, name, game){
-  return db.wins.filter(function(w){ return E_str(w['이름'])===name && E_str(w['게임'])===game; }).length;
+function E_used(db, u, game){
+  return db.wins.filter(function(w){ return E_isMe(w,u) && E_str(w['게임'])===game; }).length;
 }
-function E_tickets(db, name){
-  return { box: E_bought(db,name,'ticket_box') - E_used(db,name,'랜덤박스'),
-           roul: E_bought(db,name,'ticket_roul') - E_used(db,name,'룰렛') };
+function E_tickets(db, u){
+  return { box: E_bought(db,u,'ticket_box') - E_used(db,u,'랜덤박스'),
+           roul: E_bought(db,u,'ticket_roul') - E_used(db,u,'룰렛') };
 }
 function E_state(db, u){
   var name = E_str(u['이름']);
   return {
-    user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,name) },
+    user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u) },
     items: db.items.filter(E_onSale).map(function(i){ var id=E_str(i['ID']); return {
       id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:E_num(i['재고']),
-      limit:E_num(i['1인최대']), img:E_str(i['이미지']), mine:E_bought(db,name,id) }; }),
+      limit:E_num(i['1인최대']), img:E_str(i['이미지']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:E_num(b['남은수량'])}; }),
     roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
     wins: db.wins.slice(-40).reverse().map(function(w){ return {t:E_str(w['시간']), name:E_str(w['이름']), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
-    myOrders: db.orders.filter(function(o){ return E_str(o['이름'])===name; }).slice(-30).reverse().map(function(o){ return {t:E_str(o['시간']), no:E_str(o['주문번호']), name:E_str(o['상품명']), qty:E_num(o['수량']), sum:E_num(o['금액'])}; })
+    myOrders: db.orders.filter(function(o){ return E_isMe(o,u); }).slice(-30).reverse().map(function(o){ return {t:E_str(o['시간']), no:E_str(o['주문번호']), name:E_str(o['상품명']), qty:E_num(o['수량']), sum:E_num(o['금액'])}; })
   };
 }
 function E_order(db, req, now){
@@ -105,7 +109,7 @@ function E_order(db, req, now){
     if (!it) throw new Error('지금 팔지 않는 물건이 장바구니에 있어요.');
     var q = Math.floor(E_num(c.qty)), stock = E_num(it['재고']), lim = E_num(it['1인최대']);
     if (stock < q) throw new Error(E_str(it['이름']) + ' 재고가 부족해요! (남은 수량 ' + stock + '개)');
-    if (lim > 0 && E_bought(db,name,E_str(it['ID'])) + q > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
+    if (lim > 0 && E_bought(db,u,E_str(it['ID'])) + q > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
     total += E_num(it['가격']) * q; lines.push({it:it, q:q});
   });
   if (total > E_num(u['포인트'])) throw new Error('포인트가 부족해요! (필요 ' + total.toLocaleString() + ' / 내 포인트 ' + E_num(u['포인트']).toLocaleString() + ')');
@@ -113,7 +117,7 @@ function E_order(db, req, now){
   u['포인트'] = E_num(u['포인트']) - total; E_mark(u,'포인트');
   lines.forEach(function(l){
     l.it['재고'] = E_num(l.it['재고']) - l.q; E_mark(l.it,'재고');
-    var o = {'시간':now,'주문번호':no,'이름':name,'상품ID':E_str(l.it['ID']),'상품명':E_str(l.it['이름']),'수량':l.q,'단가':E_num(l.it['가격']),'금액':E_num(l.it['가격'])*l.q,'주문후포인트':u['포인트']};
+    var o = {'시간':now,'주문번호':no,'이름':name,'상품ID':E_str(l.it['ID']),'상품명':E_str(l.it['이름']),'수량':l.q,'단가':E_num(l.it['가격']),'금액':E_num(l.it['가격'])*l.q,'주문후포인트':u['포인트'],'학생코드':E_key(u)};
     db.orders.push(o); (db.newOrders = db.newOrders || []).push(o);
   });
   return { orderNo: no, total: total, lines: lines.map(function(l){ return {name:E_str(l.it['이름']), qty:l.q, img:E_str(l.it['이미지'])}; }) };
@@ -121,7 +125,7 @@ function E_order(db, req, now){
 function E_play(db, req, now, rand){
   var u = E_findUser(db, req.name, req.pw), name = E_str(u['이름']);
   var isRoul = req.game === 'roul', game = isRoul ? '룰렛' : '랜덤박스';
-  var t = E_tickets(db, name);
+  var t = E_tickets(db, u);
   if ((isRoul ? t.roul : t.box) < 1) throw new Error(game + ' 참가권이 없어요! 마켓에서 참가권을 먼저 사 주세요 🎟️');
   var list = isRoul ? db.roul.filter(function(r){ return E_str(r['상품명']); }) : db.box.filter(function(b){ return E_str(b['상품명']); });
   var cand = [];
@@ -136,7 +140,7 @@ function E_play(db, req, now, rand){
   }
   var row = list[idx];
   row['남은수량'] = E_num(row['남은수량']) - 1; E_mark(row,'남은수량');
-  var w = {'시간':now,'이름':name,'게임':game,'등급':E_str(row['등급']),'상품명':E_str(row['상품명']),'이미지':E_str(row['이미지'])};
+  var w = {'시간':now,'이름':name,'게임':game,'등급':E_str(row['등급']),'상품명':E_str(row['상품명']),'이미지':E_str(row['이미지']),'학생코드':E_key(u)};
   db.wins.push(w); (db.newWins = db.newWins || []).push(w);
   return { index: idx, prize: { grade: E_str(row['등급']), name: E_str(row['상품명']), img: E_str(row['이미지']) } };
 }
@@ -150,7 +154,7 @@ function setup() {
   var colors = { items:'#e5403a', users:'#1f7a4d', orders:'#b50005', box:'#ffc83d', roul:'#2fa36b', wins:'#7cc8ff' };
   Object.keys(TAB_NAMES).forEach(function(k){
     var sh = ss.getSheetByName(TAB_NAMES[k]) || ss.insertSheet(TAB_NAMES[k]);
-    if (sh.getLastRow() > 0) return;
+    if (sh.getLastRow() > 0) { ensureCols_(sh, HEADERS[k]); return; }
     var h = HEADERS[k];
     sh.getRange(1,1,1,h.length).setValues([h]).setFontWeight('bold').setBackground(colors[k]).setFontColor(k==='box'?'#3a2420':'#ffffff');
     sh.setFrozenRows(1);
@@ -159,6 +163,7 @@ function setup() {
     if (rows.length) sh.getRange(2,1,rows.length,h.length).setValues(rows.map(function(r){ return r.map(function(v){ return v===''?'':v; }); }));
     sh.autoResizeColumns(1, h.length);
   });
+  setupRosters_();
   var first = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1');
   if (first && first.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(first);
   SpreadsheetApp.getUi && SpreadsheetApp.flush();
@@ -224,6 +229,148 @@ function doPost(e) {
     if (write) { try { lock.releaseLock(); } catch (x) {} }
   }
 }
+
+/** 기존 탭에 새 제목 칸이 없으면 맨 오른쪽에 추가해요 (데이터는 그대로). */
+function ensureCols_(sh, want) {
+  var lc = Math.max(sh.getLastColumn(), 1);
+  var h = sh.getRange(1,1,1,lc).getValues()[0].map(function(x){ return String(x).trim(); });
+  want.forEach(function(name){
+    if (h.indexOf(name) < 0) { h.push(name); sh.getRange(1, h.length).setValue(name).setFontWeight('bold'); }
+  });
+  return h;
+}
+
+/* ===== 학년 명단 (다른 선생님들이 입력) → 학생 탭 자동 반영 ===== */
+var ROSTERS = [{tab:'4학년 명단', grade:'4학년', color:'#ff8a65'}, {tab:'5학년 명단', grade:'5학년', color:'#4fc3f7'}, {tab:'6학년 명단', grade:'6학년', color:'#ba68c8'}];
+var R_HDR = ['담임선생님','이름','포인트','초대장 번호','남은 포인트','상태','반영포인트'];
+var R_IN = 3;   // A~C: 선생님이 입력하는 칸
+
+function setupRosters_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  ROSTERS.forEach(function(R){
+    var sh = ss.getSheetByName(R.tab);
+    if (!sh) sh = ss.insertSheet(R.tab);
+    if (sh.getLastRow() === 0) sh.getRange(1,1,1,R_HDR.length).setValues([R_HDR]);
+    styleRoster_(sh, R);
+  });
+}
+
+function styleRoster_(sh, R) {
+  var rows = Math.max(sh.getMaxRows() - 1, 1);
+  if (sh.getMaxRows() < 101) sh.insertRowsAfter(sh.getMaxRows(), 101 - sh.getMaxRows());
+  rows = sh.getMaxRows() - 1;
+  sh.setTabColor(R.color); sh.setFrozenRows(1);
+  sh.getRange(1,1,1,R_IN).setBackground(R.color).setFontColor('#ffffff');
+  sh.getRange(1,R_IN+1,1,R_HDR.length-R_IN).setBackground('#9e9e9e').setFontColor('#ffffff');
+  sh.getRange(1,1,1,R_HDR.length).setFontWeight('bold').setHorizontalAlignment('center').setVerticalAlignment('middle');
+  sh.setRowHeight(1, 34);
+  [130,120,100,120,110,170,90].forEach(function(w,i){ sh.setColumnWidth(i+1, w); });
+  sh.getRange(2,1,rows,R_HDR.length).setHorizontalAlignment('center').setVerticalAlignment('middle');
+  sh.getRange(2,R_IN+1,rows,R_HDR.length-R_IN).setBackground('#f3f3f3').setFontColor('#555555');
+  sh.getRange(2,3,rows,1).setNumberFormat('#,##0').setDataValidation(
+    SpreadsheetApp.newDataValidation().requireNumberGreaterThanOrEqualTo(0).setAllowInvalid(false).setHelpText('포인트는 숫자만 넣어 주세요').build());
+  sh.getRange(2,4,rows,1).setNumberFormat('@').setFontWeight('bold').setFontColor('#b50005');
+  sh.getRange(2,5,rows,1).setNumberFormat('#,##0');
+  var notes = ['담임선생님 이름','학생 이름 (같은 반에 같은 이름이 있으면 김민준A 처럼 구분해 주세요)',
+    '줄 포인트. 나중에 숫자를 올리면 그만큼 추가로 지급돼요 (내리면 그만큼 빠져요)',
+    '자동으로 만들어져요 (DYB+숫자 5자리). 학생에게 알려 주세요!','학생이 지금 가지고 있는 포인트 (자동)','자동','자동 (건드리지 마세요)'];
+  notes.forEach(function(n,i){ sh.getRange(1,i+1).setNote(n); });
+  sh.hideColumns(7);
+  if (!sh.getFilter()) sh.getRange(1,1,sh.getMaxRows(),R_HDR.length-1).createFilter();
+  sh.getProtections(SpreadsheetApp.ProtectionType.RANGE).forEach(function(p){ if (p.getDescription()==='자동 칸') p.remove(); });
+  sh.getRange(1,R_IN+1,sh.getMaxRows(),R_HDR.length-R_IN).protect().setDescription('자동 칸').setWarningOnly(true);
+  sh.getRange(1,1,1,R_IN).protect().setDescription('자동 칸').setWarningOnly(true);
+}
+
+function newCode_(used) {
+  var c;
+  do { c = 'DYB' + ('0000' + Math.floor(Math.random() * 100000)).slice(-5); } while (used[c]);
+  used[c] = true; return c;
+}
+
+/** 4·5·6학년 명단을 학생 탭에 반영해요. 명단을 고치면 자동으로 실행돼요. */
+function 명단반영() {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(25000); } catch (x) { return; }
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var us = ss.getSheetByName(TAB_NAMES.users); if (!us) { setup(); us = ss.getSheetByName(TAB_NAMES.users); }
+    var uh = ensureCols_(us, HEADERS.users);
+    var ci = function(n){ return uh.indexOf(n); };
+    var uv = us.getLastRow() > 1 ? us.getRange(2,1,us.getLastRow()-1,uh.length).getValues() : [];
+    var used = {}, byCode = {};
+    uv.forEach(function(r,i){ var c = E_pw(r[ci('비밀번호')]); if (c) { used[c] = true; byCode[c] = i; } });
+    var added = [], usersChanged = false;
+
+    ROSTERS.forEach(function(R){
+      var sh = ss.getSheetByName(R.tab); if (!sh || sh.getLastRow() < 2) return;
+      var n = sh.getLastRow() - 1, vals = sh.getRange(2,1,n,R_HDR.length).getValues(), out = [];
+      vals.forEach(function(r){
+        var teacher = E_str(r[0]), name = E_str(r[1]), ptsRaw = r[2], code = E_pw(r[3]), applied = r[6];
+        if (!name) { out.push([code || '', code ? r[4] : '', (teacher || ptsRaw !== '') ? '⏳ 이름을 넣어 주세요' : '', applied]); return; }
+        if (ptsRaw !== '' && isNaN(Number(ptsRaw))) { out.push([code, r[4], '⚠️ 포인트는 숫자만!', applied]); return; }
+        var pts = E_num(ptsRaw), row;
+        if (code && byCode[code] !== undefined) {
+          row = uv[byCode[code]];
+          if (E_str(row[ci('이름')]) !== name) { row[ci('이름')] = name; usersChanged = true; }
+          if (E_str(row[ci('학년')]) !== R.grade) { row[ci('학년')] = R.grade; usersChanged = true; }
+          if (E_str(row[ci('담임')]) !== teacher) { row[ci('담임')] = teacher; usersChanged = true; }
+          var delta = pts - E_num(applied);
+          if (applied !== '' && delta !== 0) { row[ci('포인트')] = E_num(row[ci('포인트')]) + delta; usersChanged = true; }
+          if (applied === '') { /* 예전에 이어진 줄: 지금 값을 기준으로 삼아요 */ }
+          out.push([code, E_num(row[ci('포인트')]), '✅ 등록됨', pts]);
+        } else {
+          if (!code) code = newCode_(used); else used[code] = true;
+          row = uh.map(function(){ return ''; });
+          row[ci('이름')] = name; row[ci('비밀번호')] = code; row[ci('포인트')] = pts; row[ci('학년')] = R.grade; row[ci('담임')] = teacher;
+          uv.push(row); byCode[code] = uv.length - 1; added.push(row); usersChanged = true;
+          out.push([code, pts, '✅ 등록됨', pts]);
+        }
+      });
+      sh.getRange(2, R_IN+1, n, R_HDR.length-R_IN).setValues(out);
+    });
+
+    if (usersChanged && uv.length) {
+      us.getRange(2,1,uv.length,uh.length).setValues(uv);
+      us.getRange(2, ci('비밀번호')+1, uv.length, 1).setNumberFormat('@');
+    }
+    SpreadsheetApp.flush();
+    return added.length;
+  } finally { try { lock.releaseLock(); } catch (x) {} }
+}
+
+/** 명단 탭에서 이름·포인트를 고치면 자동 반영 */
+function onEdit(e) {
+  try {
+    var sh = e && e.range && e.range.getSheet(); if (!sh) return;
+    var isRoster = ROSTERS.some(function(R){ return R.tab === sh.getName(); });
+    if (isRoster && e.range.getColumn() <= R_IN) 명단반영();
+  } catch (x) {}
+}
+
+/** 시트를 열면 위쪽에 '🎄 마켓 관리' 메뉴가 생겨요 */
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('🎄 마켓 관리')
+    .addItem('명단 → 학생 탭 반영하기 (남은 포인트 새로고침)', '명단반영')
+    .addSeparator()
+    .addItem('지금 탭: 이름순 정렬 (가나다)', '이름순정렬')
+    .addItem('지금 탭: 담임선생님 → 이름순 정렬', '담임순정렬')
+    .addItem('지금 탭: 포인트 많은 순 정렬', '포인트순정렬')
+    .addSeparator()
+    .addItem('시트 꾸미기', '꾸미기')
+    .addToUi();
+}
+function sortActive_(spec) {
+  var sh = SpreadsheetApp.getActiveSheet(), name = sh.getName();
+  var h = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+  if (sh.getLastRow() < 3) return;
+  var cols = spec.map(function(s){ var c = h.indexOf(s[0]) + 1; return c ? {column:c, ascending:s[1]} : null; }).filter(Boolean);
+  if (!cols.length) { SpreadsheetApp.getUi().alert('"' + name + '" 탭에는 정렬할 칸이 없어요.'); return; }
+  sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).sort(cols);
+}
+function 이름순정렬() { sortActive_([['이름',true]]); }
+function 담임순정렬() { sortActive_([['담임선생님',true],['담임',true],['이름',true]]); }
+function 포인트순정렬() { sortActive_([['남은 포인트',false],['포인트',false]]); }
 
 /* ===== 시트 꾸미기: 데이터는 그대로 두고 모양·입력 규칙만 정리해요. 여러 번 실행해도 괜찮아요. ===== */
 function 꾸미기() {
@@ -323,7 +470,9 @@ function 꾸미기() {
   var lines = [
     ['🎄 DYB 크리스마스 마켓 관리 시트'],[''],
     ['📦 물품','가격·재고·1인최대·판매(Y/N)를 바꾸면 20초 안에 사이트에 반영돼요. 재고 10개 이하는 빨강, 0개는 회색이에요.'],
-    ['🧒 학생','이름·비밀번호(초대장 번호)·포인트. 같은 이름은 두 번 쓰지 마세요.'],
+    ['📝 학년 명단','4·5·6학년 명단 탭에 담임선생님·이름·포인트만 넣으면 학생 탭에 자동으로 들어가고 초대장 번호(DYB+숫자 5자리)가 만들어져요.'],
+    ['','포인트 숫자를 나중에 올리면 그만큼 추가 지급돼요. 정렬은 제목줄의 ▼(필터) 또는 위쪽 [🎄 마켓 관리] 메뉴에서!'],
+    ['🧒 학생','명단에서 자동으로 채워져요. 샘플 학생(비밀번호 1234)은 연습용이니 행사 전에 지워도 돼요.'],
     ['🧾 주문','사이트에서 주문하면 자동으로 쌓여요. 학생이 보여주는 주문번호로 확인하세요.'],
     ['🎁 랜덤박스','가중치가 클수록 잘 나와요. 남은수량이 0이면 안 나와요. 1등은 노란 줄이에요.'],
     ['🎡 룰렛','칸을 추가·삭제하면 룰렛 칸 수가 자동으로 바뀌어요.'],
@@ -336,7 +485,7 @@ function 꾸미기() {
   g.getRange('A1').setFontSize(20).setFontWeight('bold').setFontColor('#b50005');
   g.getRange(3,1,lines.length-2,1).setFontWeight('bold').setFontSize(12);
   g.getRange(3,2,lines.length-2,1).setFontSize(12).setWrap(true);
-  g.getRange('A10:B11').setBackground('#ffe9e7'); g.getRange('A12:B12').setBackground('#fff6d6');
+  g.getRange('A12:B13').setBackground('#ffe9e7'); g.getRange('A14:B14').setBackground('#fff6d6'); g.getRange('A5:B6').setBackground('#eef6ff');
   g.setColumnWidth(1,120); g.setColumnWidth(2,620);
   ss.setActiveSheet(g); ss.moveActiveSheet(1);
   SpreadsheetApp.flush();
