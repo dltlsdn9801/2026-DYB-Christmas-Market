@@ -596,7 +596,8 @@ function 꾸미기() {
   var THEME = {
     items:{head:'#e5403a',band:'#fff1ef',tab:'#e5403a'}, users:{head:'#1f7a4d',band:'#eefbf2',tab:'#1f7a4d'},
     orders:{head:'#b50005',band:'#fff6f0',tab:'#b50005'}, box:{head:'#ffc83d',band:'#fff9e3',tab:'#ffc83d'},
-    roul:{head:'#2fa36b',band:'#effaf3',tab:'#2fa36b'}, wins:{head:'#3a8dde',band:'#eef6ff',tab:'#3a8dde'}
+    roul:{head:'#2fa36b',band:'#effaf3',tab:'#2fa36b'}, wins:{head:'#3a8dde',band:'#eef6ff',tab:'#3a8dde'},
+    letters:{head:'#ff8fab',band:'#fff0f4',tab:'#ff8fab'}, comments:{head:'#9575cd',band:'#f4f0fb',tab:'#9575cd'}, banned:{head:'#616161',band:'#f5f5f5',tab:'#616161'}
   };
   var WIDTH = {'ID':110,'카테고리':80,'이름':170,'가격':90,'초기재고':80,'현재고':80,'당일판매수량':100,'당일재고':80,'1인최대':70,'이미지':100,'판매':60,'비밀번호':90,'포인트':100,
     '시간':120,'주문번호':100,'상품ID':100,'상품명':170,'수량':60,'단가':80,'금액':90,'주문후포인트':110,'등급':60,'가중치':70,'남은수량':80,'칸':50,'게임':80};
@@ -605,7 +606,7 @@ function 꾸미기() {
   Object.keys(TAB_NAMES).forEach(function(k){
     var sh = ss.getSheetByName(TAB_NAMES[k]); if (!sh) return;
     var h = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
-    var n = h.length, rows = Math.max(sh.getMaxRows()-1, 1), t = THEME[k];
+    var n = h.length, rows = Math.max(sh.getMaxRows()-1, 1), t = THEME[k] || {head:'#757575',band:'#f5f5f5',tab:'#757575'};
     var col = function(name){ return h.indexOf(name) + 1; };
     var body = function(name){ var c = col(name); return c ? sh.getRange(2, c, rows, 1) : null; };
     sh.getRange(2,1,rows,sh.getMaxColumns()).clearDataValidations();
@@ -712,4 +713,5 @@ function 꾸미기() {
   g.setColumnWidth(1,120); g.setColumnWidth(2,620);
   ss.setActiveSheet(g); ss.moveActiveSheet(1);
   SpreadsheetApp.flush();
+  재고반영();
 }
