@@ -126,10 +126,12 @@ header.top::after{content:"";position:absolute;left:0;right:0;bottom:-19px;heigh
 @media (max-width:640px){.top-title .date{font-size:15px;white-space:nowrap;padding:3px 12px 1px}.top-title h2{-webkit-text-stroke:2px var(--line)}.top-title h2 .l2{font-size:clamp(28px,8.6vw,40px);white-space:normal}.prop{width:20vw}.top-in{align-items:center}}
 
 .wallet{max-width:1100px;margin:30px auto 0;padding:0 14px;position:relative;z-index:3}
-.wallet-in{background:var(--cream);border:3px solid var(--line);border-radius:24px;box-shadow:0 5px 0 var(--line);display:flex;align-items:center;gap:12px;padding:12px 18px;flex-wrap:wrap}
-.wallet .me{display:flex;align-items:center;gap:8px;font-size:30px}
+.wallet-in{background:var(--cream);border:3px solid var(--line);border-radius:24px;box-shadow:0 5px 0 var(--line);display:flex;align-items:center;gap:10px;padding:12px 16px;flex-wrap:nowrap}
+.wallet .me span{white-space:nowrap}
+@media (max-width:1100px){.wallet-in{flex-wrap:wrap}}
+.wallet .me{display:flex;align-items:center;gap:6px;font-size:28px;flex:none}
 .wallet .me img{width:56px;height:56px;object-fit:contain}
-.chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border:3px solid var(--line);border-radius:999px;padding:6px 16px 4px;font-size:23px;white-space:nowrap}
+.chip{display:inline-flex;align-items:center;gap:5px;background:#fff;border:3px solid var(--line);border-radius:999px;padding:6px 14px 4px;font-size:22px;white-space:nowrap;flex:none}
 .chip b{font-weight:400;color:var(--deep);font-size:28px}
 .chip.pts{background:var(--gold)}
 .wallet .sp{flex:1}
