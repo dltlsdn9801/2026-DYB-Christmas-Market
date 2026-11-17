@@ -6,14 +6,15 @@ var HEADERS = {
   box:    ['등급','상품명','이미지','가중치','남은수량','처음수량'],
   roul:   ['칸','상품명','이미지','남은수량'],
   wins:   ['시간','이름','게임','등급','상품명','이미지','학생코드'],
-  letters:['시간','학년','담임','이름','편지에 쓴 이름','내용','지급포인트','학생코드'],
-  comments:['시간','학년','이름','내용','상태','학생코드'],
+  letters:['선생님','학생 이름','내용','학년','시간','편지에 쓴 이름','명단 담임','지급포인트','학생코드'],
+  comments:['시간','학년','이름','내용','상태','지급포인트','학생코드'],
   banned: ['금지어']
 };
 var TAB_NAMES = {items:'물품',users:'학생',orders:'주문',box:'랜덤박스',roul:'룰렛',wins:'당첨기록',letters:'편지',comments:'댓글',banned:'금지어'};
 var LETTER_POINTS = 1000;   // 편지 한 번에 주는 포인트
 var LETTER_MAX = 1;         // 포인트를 받을 수 있는 편지 수 (1인)
 var COMMENT_MAX = 2;        // 1인 댓글 최대 개수
+var COMMENT_POINTS = 500;   // 첫 댓글 포인트
 
 var SEED = {
   items: [
@@ -102,10 +103,11 @@ function E_state(db, u){
       limit:E_limit(i), img:E_str(i['이미지']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
     roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
-    wins: db.wins.slice(-60).reverse().map(function(w){ return {t:E_str(w['시간']), who:E_who(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
+    wins: db.wins.slice(-60).reverse().map(function(w){ return {t:E_str(w['시간']), who:E_who(db,w), nm:E_mask(w['이름']), g:E_gradeOf(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
     comments: db.comments.filter(function(c){ var st = E_str(c['상태']); return st !== '숨김' && st !== '자동삭제' && !E_bad(E_str(c['내용']), E_bannedList(db)); })
       .slice(-60).reverse().map(function(c){ return {t:E_str(c['시간']), who:E_who(db,c), text:E_str(c['내용']), mine:E_isMe(c,u)}; }),
     letter: { sent: db.letters.filter(function(l){ return E_isMe(l,u); }).length, max: LETTER_MAX, points: LETTER_POINTS },
+    comment: { mine: db.comments.filter(function(c){ return E_isMe(c,u) && E_str(c['상태']) !== '자동삭제'; }).length, max: COMMENT_MAX, points: COMMENT_POINTS },
     myOrders: db.orders.filter(function(o){ return E_isMe(o,u); }).slice(-30).reverse().map(function(o){ return {t:E_str(o['시간']), no:E_str(o['주문번호']), name:E_str(o['상품명']), qty:E_num(o['수량']), sum:E_num(o['금액'])}; })
   };
 }
@@ -198,16 +200,17 @@ function E_bad(text, extra){
 
 /* ---------- 편지 / 댓글 ---------- */
 function E_letter(db, req, now){
-  var u = E_findUser(db, req.name, req.pw), text = E_str(req.text), writer = E_str(req.writer) || E_str(u['이름']);
+  var u = E_findUser(db, req.name, req.pw), text = E_str(req.text), writer = E_str(req.writer) || E_str(u['이름']), teacher = E_str(req.teacher);
+  if (!teacher) throw new Error('받는 선생님 이름을 써 줘! ✏️');
   if (Array.from(text).length < 10) throw new Error('편지를 조금만 더 길게 써 줄래? (10글자 이상) ✏️');
   if (Array.from(text).length > 600) throw new Error('편지가 너무 길어요! 600글자까지만 써 줘.');
-  if (E_bad(text + ' ' + writer, E_bannedList(db))) throw new Error('고운 말로 다시 써 줄래? 🙏');
+  if (E_bad(text + ' ' + writer + ' ' + teacher, E_bannedList(db))) throw new Error('고운 말로 다시 써 줄래? 🙏');
   var sent = db.letters.filter(function(l){ return E_isMe(l,u); }).length;
   var reward = sent < LETTER_MAX ? LETTER_POINTS : 0;
   if (reward) { u['포인트'] = E_num(u['포인트']) + reward; E_mark(u,'포인트'); }
-  var row = {'시간':now,'학년':E_str(u['학년']),'담임':E_str(u['담임']),'이름':E_str(u['이름']),'편지에 쓴 이름':writer,'내용':text,'지급포인트':reward,'학생코드':E_key(u)};
+  var row = {'선생님':teacher,'학생 이름':E_str(u['이름']),'내용':text,'학년':E_str(u['학년']),'시간':now,'편지에 쓴 이름':writer,'명단 담임':E_str(u['담임']),'지급포인트':reward,'학생코드':E_key(u)};
   db.letters.push(row); (db.newLetters = db.newLetters || []).push(row);
-  return { reward: reward, writer: writer };
+  return { reward: reward, writer: writer, teacher: teacher };
 }
 function E_comment(db, req, now){
   var u = E_findUser(db, req.name, req.pw), text = E_str(req.text).replace(/\s+/g,' ');
@@ -216,9 +219,11 @@ function E_comment(db, req, now){
   var mine = db.comments.filter(function(c){ return E_isMe(c,u) && E_str(c['상태']) !== '자동삭제'; }).length;
   var bad = E_bad(text, E_bannedList(db));
   if (!bad && mine >= COMMENT_MAX) throw new Error('댓글은 한 사람당 ' + COMMENT_MAX + '개까지 쓸 수 있어요!');
-  var row = {'시간':now,'학년':E_str(u['학년']),'이름':E_str(u['이름']),'내용':text,'상태':bad ? '자동삭제' : '','학생코드':E_key(u)};
+  var reward = (!bad && mine === 0) ? COMMENT_POINTS : 0;
+  if (reward) { u['포인트'] = E_num(u['포인트']) + reward; E_mark(u,'포인트'); }
+  var row = {'시간':now,'학년':E_str(u['학년']),'이름':E_str(u['이름']),'내용':text,'상태':bad ? '자동삭제' : '','지급포인트':reward,'학생코드':E_key(u)};
   db.comments.push(row); (db.newComments = db.newComments || []).push(row);
-  return bad ? { bad: true, msg: '나쁜 말이 있어서 댓글이 바로 지워졌어요 🧹 고운 말로 다시 써 줘!' } : { bad: false };
+  return bad ? { bad: true, msg: '나쁜 말이 있어서 댓글이 바로 지워졌어요 🧹 고운 말로 다시 써 줘!' } : { bad: false, reward: reward };
 }
 
 /* ===== Google Apps Script 부분 (시트와 연결) ===== */
@@ -230,7 +235,7 @@ function setup() {
   var colors = { items:'#e5403a', users:'#1f7a4d', orders:'#b50005', box:'#ffc83d', roul:'#2fa36b', wins:'#7cc8ff', letters:'#ff8fab', comments:'#9575cd', banned:'#616161' };
   Object.keys(TAB_NAMES).forEach(function(k){
     var sh = ss.getSheetByName(TAB_NAMES[k]) || ss.insertSheet(TAB_NAMES[k]);
-    if (sh.getLastRow() > 0) { ensureCols_(sh, HEADERS[k]); return; }
+    if (sh.getLastRow() > 0) { if (k === 'letters') reorderCols_(sh, HEADERS[k]); ensureCols_(sh, HEADERS[k]); return; }
     var h = HEADERS[k];
     sh.getRange(1,1,1,h.length).setValues([h]).setFontWeight('bold').setBackground(colors[k]).setFontColor(k==='box'?'#3a2420':'#ffffff');
     sh.setFrozenRows(1);
@@ -325,6 +330,19 @@ function ensureCols_(sh, want) {
   return h;
 }
 
+/** 탭의 칸 순서를 원하는 제목 순서로 바꿔요 (데이터는 제목을 따라 함께 옮겨져요). */
+function reorderCols_(sh, want) {
+  var lr = sh.getLastRow(), lc = sh.getLastColumn(); if (lr < 1 || lc < 1) return;
+  var v = sh.getRange(1,1,lr,lc).getValues(), h = v[0].map(function(x){ return String(x).trim(); });
+  if (h['이름'] === undefined && h.indexOf('이름') >= 0 && want.indexOf('학생 이름') >= 0) h[h.indexOf('이름')] = '학생 이름';
+  if (h.indexOf('담임') >= 0 && want.indexOf('명단 담임') >= 0) h[h.indexOf('담임')] = '명단 담임';
+  var order = want.concat(h.filter(function(x){ return x && want.indexOf(x) < 0; }));
+  if (order.join('|') === h.join('|')) return;
+  var out = [order].concat(v.slice(1).map(function(r){ return order.map(function(name){ var i = h.indexOf(name); return i >= 0 ? r[i] : ''; }); }));
+  sh.getRange(1,1,lr,Math.max(lc, order.length)).clearContent();
+  sh.getRange(1,1,out.length,order.length).setValues(out);
+}
+
 /* ===== 학년 명단 (다른 선생님들이 입력) → 학생 탭 자동 반영 ===== */
 var ROSTERS = [{tab:'4학년 명단', grade:'4학년', color:'#ff8a65'}, {tab:'5학년 명단', grade:'5학년', color:'#4fc3f7'}, {tab:'6학년 명단', grade:'6학년', color:'#ba68c8'}];
 var R_HDR = ['담임선생님','이름','포인트','초대장 번호','남은 포인트','상태','반영포인트'];
@@ -385,14 +403,15 @@ function 명단반영() {
     var uv = us.getLastRow() > 1 ? us.getRange(2,1,us.getLastRow()-1,uh.length).getValues() : [];
     var used = {}, byCode = {};
     uv.forEach(function(r,i){ var c = E_pw(r[ci('비밀번호')]); if (c) { used[c] = true; byCode[c] = i; } });
-    var added = [], usersChanged = false;
+    var added = [], usersChanged = false, seen = {};
+    var gradeSet = {}; ROSTERS.forEach(function(R){ gradeSet[R.grade] = true; });
 
     ROSTERS.forEach(function(R){
       var sh = ss.getSheetByName(R.tab); if (!sh || sh.getLastRow() < 2) return;
       var n = sh.getLastRow() - 1, vals = sh.getRange(2,1,n,R_HDR.length).getValues(), out = [];
       vals.forEach(function(r){
         var teacher = E_str(r[0]), name = E_str(r[1]), ptsRaw = r[2], code = E_pw(r[3]), applied = r[6];
-        if (!name) { out.push([code || '', code ? r[4] : '', (teacher || ptsRaw !== '') ? '⏳ 이름을 넣어 주세요' : '', applied]); return; }
+        if (!name) { out.push(['', '', (teacher || ptsRaw !== '') ? '⏳ 이름을 넣어 주세요' : '', '']); return; }
         if (ptsRaw !== '' && isNaN(Number(ptsRaw))) { out.push([code, r[4], '⚠️ 포인트는 숫자만!', applied]); return; }
         var pts = E_num(ptsRaw), row;
         if (code && byCode[code] !== undefined) {
@@ -403,25 +422,42 @@ function 명단반영() {
           var delta = pts - E_num(applied);
           if (applied !== '' && delta !== 0) { row[ci('포인트')] = E_num(row[ci('포인트')]) + delta; usersChanged = true; }
           if (applied === '') { /* 예전에 이어진 줄: 지금 값을 기준으로 삼아요 */ }
+          seen[code] = true;
           out.push([code, E_num(row[ci('포인트')]), '✅ 등록됨', pts]);
         } else {
           if (!code) code = newCode_(used); else used[code] = true;
           row = uh.map(function(){ return ''; });
           row[ci('이름')] = name; row[ci('비밀번호')] = code; row[ci('포인트')] = pts; row[ci('학년')] = R.grade; row[ci('담임')] = teacher;
           uv.push(row); byCode[code] = uv.length - 1; added.push(row); usersChanged = true;
+          seen[code] = true;
           out.push([code, pts, '✅ 등록됨', pts]);
         }
       });
       sh.getRange(2, R_IN+1, n, R_HDR.length-R_IN).setValues(out);
     });
 
-    if (usersChanged && uv.length) {
-      us.getRange(2,1,uv.length,uh.length).setValues(uv);
-      us.getRange(2, ci('비밀번호')+1, uv.length, 1).setNumberFormat('@');
+    // 명단에서 지워진 학생(이름을 지웠거나 줄을 삭제함)은 학생 탭에서도 빼요. 샘플·직접 넣은 학생은 그대로 둬요.
+    var oldLen = uv.length;
+    var kept = uv.filter(function(r){ return !(gradeSet[E_str(r[ci('학년')])] && !seen[E_pw(r[ci('비밀번호')])]); });
+    if (kept.length !== oldLen) usersChanged = true;
+    if (usersChanged) {
+      if (oldLen) us.getRange(2,1,oldLen,uh.length).clearContent();
+      if (kept.length) {
+        us.getRange(2,1,kept.length,uh.length).setValues(kept);
+        us.getRange(2, ci('비밀번호')+1, kept.length, 1).setNumberFormat('@');
+      }
     }
     SpreadsheetApp.flush();
     return added.length;
   } finally { try { lock.releaseLock(); } catch (x) {} }
+}
+
+/** 줄 삭제처럼 onEdit이 못 잡는 변화도 반영 (꾸미기 실행 시 자동 설치) */
+function onChangeSync(e) { if (e && e.changeType === 'EDIT') return; try { 명단반영(); } catch (x) {} }
+function installTriggers_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var has = ScriptApp.getProjectTriggers().some(function(t){ return t.getHandlerFunction() === 'onChangeSync'; });
+  if (!has) ScriptApp.newTrigger('onChangeSync').forSpreadsheet(ss).onChange().create();
 }
 
 /** 명단 탭에서 이름·포인트를 고치면 자동 반영 */
@@ -439,7 +475,7 @@ function onOpen() {
     .addItem('명단 → 학생 탭 반영하기 (남은 포인트 새로고침)', '명단반영')
     .addSeparator()
     .addItem('지금 탭: 이름순 정렬 (가나다)', '이름순정렬')
-    .addItem('지금 탭: 담임선생님 → 이름순 정렬', '담임순정렬')
+    .addItem('지금 탭: 선생님 → 이름순 정렬 (명단·편지)', '담임순정렬')
     .addItem('지금 탭: 포인트 많은 순 정렬', '포인트순정렬')
     .addSeparator()
     .addItem('시트 꾸미기', '꾸미기')
@@ -454,12 +490,14 @@ function sortActive_(spec) {
   sh.getRange(2,1,sh.getLastRow()-1,sh.getLastColumn()).sort(cols);
 }
 function 이름순정렬() { sortActive_([['이름',true]]); }
-function 담임순정렬() { sortActive_([['담임선생님',true],['담임',true],['이름',true]]); }
+function 담임순정렬() { sortActive_([['담임선생님',true],['선생님',true],['담임',true],['이름',true],['학생 이름',true]]); }
 function 포인트순정렬() { sortActive_([['남은 포인트',false],['포인트',false]]); }
 
 /* ===== 시트 꾸미기: 데이터는 그대로 두고 모양·입력 규칙만 정리해요. 여러 번 실행해도 괜찮아요. ===== */
 function 꾸미기() {
   setup();
+  try { installTriggers_(); } catch (x) {}
+  명단반영();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var NOTES = {
     items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 스페셜 / 간식 / 문구 중 하나','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','재고':'남은 수량. 주문되면 자동으로 줄어요','1인최대':'한 사람이 살 수 있는 최대 개수. 비워 두면 제한 없음','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에서 숨기기'},
@@ -468,7 +506,7 @@ function 꾸미기() {
     roul:  {'칸':'룰렛 칸 번호 (순서)','남은수량':'0이 되면 회색 칸이 되고 안 나와요'},
     orders:{'주문번호':'학생이 선생님께 보여주는 번호'},
     wins:  {},
-    letters: {'내용':'학생이 담임선생님께 쓴 편지','지급포인트':'편지로 받은 포인트'},
+    letters: {'선생님':'학생이 직접 쓴 받는 선생님 이름 (▼ 필터로 내 이름만 골라 보세요)','학생 이름':'편지를 쓴 학생 (로그인 이름)','내용':'편지 내용','지급포인트':'편지로 받은 포인트'},
     comments: {'상태':'"숨김"이라고 쓰면 사이트에서 사라져요. "자동삭제"는 비속어로 자동으로 지워진 댓글이에요'},
     banned: {'금지어':'여기에 단어를 추가하면 그 단어가 들어간 댓글·편지는 막혀요 (한 칸에 한 단어)'}
   };
@@ -527,7 +565,9 @@ function 꾸미기() {
       var stl = col('상태'); if (stl) { var Lc = String.fromCharCode(64+stl);
         sh.setConditionalFormatRules([SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=OR($'+Lc+'2="숨김",$'+Lc+'2="자동삭제")').setFontColor('#aaaaaa').setStrikethrough(true).setRanges([sh.getRange(2,1,rows,n)]).build()]); }
     }
-    if (k === 'letters') { var ct = body('내용'); if (ct) { ct.setWrap(true).setHorizontalAlignment('left'); sh.setColumnWidth(col('내용'), 360); } }
+    if (k === 'letters') { var ct = body('내용'); if (ct) { ct.setWrap(true).setHorizontalAlignment('left'); sh.setColumnWidth(col('내용'), 360); }
+      if (col('선생님')) sh.setColumnWidth(col('선생님'), 110); if (col('학생 이름')) sh.setColumnWidth(col('학생 이름'), 100);
+      sh.setFrozenColumns(2); if (sh.getFilter()) sh.getFilter().remove(); sh.getRange(1,1,sh.getMaxRows(),n).createFilter(); }
     if (k === 'comments') { var cc = body('내용'); if (cc) { cc.setWrap(true).setHorizontalAlignment('left'); sh.setColumnWidth(col('내용'), 320); } }
     if (k === 'box') {
       var gr = body('등급'); if (gr) gr.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['1등','2등','3등','4등','5등'], true).setAllowInvalid(true).build());
@@ -565,14 +605,14 @@ function 꾸미기() {
   var lines = [
     ['🎄 DYB 크리스마스 마켓 관리 시트'],[''],
     ['📦 물품','가격·재고·1인최대·판매(Y/N)를 바꾸면 20초 안에 사이트에 반영돼요. 재고 10개 이하는 빨강, 0개는 회색이에요.'],
-    ['📝 학년 명단','4·5·6학년 명단 탭에 담임선생님·이름·포인트만 넣으면 학생 탭에 자동으로 들어가고 초대장 번호(DYB+숫자 5자리)가 만들어져요.'],
+    ['📝 학년 명단','4·5·6학년 명단 탭에 담임선생님·이름·포인트만 넣으면 학생 탭에 자동으로 들어가고 초대장 번호(DYB+숫자 5자리)가 만들어져요. 이름을 지우거나 줄을 삭제하면 번호와 학생 정보도 함께 지워져요.'],
     ['','포인트 숫자를 나중에 올리면 그만큼 추가 지급돼요. 정렬은 제목줄의 ▼(필터) 또는 위쪽 [🎄 마켓 관리] 메뉴에서!'],
     ['🧒 학생','명단에서 자동으로 채워져요. 샘플 학생(비밀번호 1234)은 연습용이니 행사 전에 지워도 돼요.'],
     ['🧾 주문','사이트에서 주문하면 자동으로 쌓여요. 학생이 보여주는 주문번호로 확인하세요.'],
     ['🎁 랜덤박스','가중치가 클수록 잘 나와요. 남은수량이 0이면 안 나와요. 1등은 노란 줄이에요.'],
     ['🎡 룰렛','칸을 추가·삭제하면 룰렛 칸 수가 자동으로 바뀌어요.'],
     ['🏆 당첨기록','룰렛·랜덤박스 결과가 자동으로 쌓여요.'],
-    ['💌 편지 / 💬 댓글','학생이 쓴 편지와 댓글이 쌓여요. 댓글 상태 칸에 "숨김"을 쓰면 사이트에서 사라져요.'],
+    ['💌 편지 / 💬 댓글','편지는 [선생님 / 학생 이름 / 내용] 순서예요. 선생님 칸 ▼ 필터로 내 학생 편지만 볼 수 있어요. 댓글 상태 칸에 "숨김"을 쓰면 사이트에서 사라져요.'],
     ['🚫 금지어','여기에 단어를 추가하면 그 단어가 든 댓글·편지가 막혀요. (기본 비속어 필터는 이미 켜져 있어요)'],[''],
     ['⚠️ 주의','탭 이름과 1행 제목은 바꾸지 마세요. 물품 ID와 학생 이름도 행사 중에는 바꾸지 마세요.'],
     ['⚠️ 주의','주문·당첨기록 줄을 지우면 참가권이 되살아날 수 있어요. 연습 기록 정리할 때만 지우세요.'],

@@ -156,7 +156,7 @@ section.view.on{display:block}
 .rule .note{font-size:15px;color:#7a9a6a;display:block}
 
 /* category headers */
-.cat{margin-top:36px}
+.cat{max-width:900px;margin:36px auto 0}
 .cat-head{display:flex;align-items:flex-end;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .cat-head .who{width:clamp(80px,13vw,110px);filter:drop-shadow(0 4px 0 rgba(0,0,0,.2));animation:bob 2.6s ease-in-out infinite}
 .ribbon-title{position:relative;background:var(--cream);border:3px solid var(--line);border-radius:18px;padding:6px 18px 4px;box-shadow:0 5px 0 var(--line)}
@@ -167,16 +167,16 @@ section.view.on{display:block}
 .bubble::after{content:"";position:absolute;left:-7px;bottom:12px;border:6px solid transparent;border-right:9px solid #fff}
 @media (max-width:640px){.bubble{display:none}}
 
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:26px 20px;padding-top:10px}
-@media (max-width:480px){.grid{grid-template-columns:repeat(2,1fr);gap:14px}}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:30px 26px;padding-top:10px;max-width:900px}
+@media (max-width:600px){.grid{grid-template-columns:repeat(2,1fr);gap:22px 14px}}
 .card{background:#fff;border:3px solid var(--line);border-radius:24px;padding:10px 10px 12px;text-align:center;box-shadow:0 6px 0 var(--line);position:relative;transition:transform .2s}
 .card:nth-child(odd){rotate:-.6deg}.card:nth-child(even){rotate:.6deg}
 .card:hover{transform:translateY(-6px);rotate:0deg}
 .card .pic{background:var(--cream);border-radius:18px;aspect-ratio:1;display:flex;align-items:center;justify-content:center;overflow:hidden;
   background-image:radial-gradient(rgba(229,64,58,.12) 2px,transparent 3px);background-size:16px 16px;position:relative}
-.card .pic img{max-height:80%;max-width:80%;object-fit:contain;border-radius:12px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.12))}
-.card .name{font-size:clamp(16px,2.6vw,19px);margin-top:8px;line-height:1.2;min-height:2.4em;display:flex;align-items:center;justify-content:center}
-.tag{display:inline-block;position:relative;background:var(--gold);border:2.5px solid var(--line);border-radius:8px 14px 14px 8px;padding:2px 12px 0 18px;font-size:19px;margin-top:4px}
+.card .pic img{max-height:90%;max-width:90%;object-fit:contain;border-radius:12px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.12))}
+.card .name{font-size:clamp(17px,2.4vw,23px);margin-top:8px;line-height:1.2;min-height:2.4em;display:flex;align-items:center;justify-content:center}
+.tag{display:inline-block;position:relative;background:var(--gold);border:2.5px solid var(--line);border-radius:8px 14px 14px 8px;padding:2px 14px 0 20px;font-size:22px;margin-top:4px}
 .tag::before{content:"";position:absolute;left:5px;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:#fff;border:2px solid var(--line)}
 .stock{font-size:14px;color:#8a7a6a;margin-top:6px}
 .stock.low{color:var(--deep)}
@@ -270,6 +270,7 @@ section.view.on{display:block}
 .wlist li.first .gr{background:var(--gold)}
 .wlist li img{width:42px;height:42px;object-fit:contain;flex:none;border-radius:8px}
 .wlist li span{min-width:0;overflow-wrap:anywhere}
+.wlist .wg{color:#8a6a5a;font-size:16px;flex:none}.wlist .wn{font-weight:400;color:var(--deep);flex:none}.wlist .arrow{color:#b0a090;flex:none}
 .wlist li .t{margin-left:auto;color:#b0a090;font-size:14px;flex:none}
 .wlist .empty{color:#aa9a8a;justify-content:center;border:0}
 
@@ -286,7 +287,7 @@ section.view.on{display:block}
 .rpic img{max-width:86%;max-height:86%}
 .rname{font-size:28px;color:var(--deep);line-height:1.15}
 .rgrade{display:inline-block;background:var(--gold);border:2.5px solid var(--line);border-radius:999px;padding:2px 14px 0;font-size:18px;margin-top:6px}
-.peek{width:96px;margin:-70px auto 4px}
+.peek{width:100px;margin:0 auto 6px;display:block}
 .mbox .ok{margin-top:16px}
 .mbox.jackpot{background:linear-gradient(#fff6c8,#fff);box-shadow:0 8px 0 var(--line),0 0 60px 20px rgba(255,214,80,.8)}
 .olist{list-style:none;text-align:left;margin:10px 0;max-height:46vh;overflow:auto}
@@ -333,7 +334,9 @@ section.view.on{display:block}
 .env .stamp img{width:44px}
 .paper{position:relative;background:#fffdf6;border:3px solid var(--line);border-top:0;padding:22px 26px 14px 62px;
   background-image:linear-gradient(90deg,transparent 46px,#ffb3c7 46px,#ffb3c7 49px,transparent 49px),repeating-linear-gradient(#fffdf6 0 39px,#cfe6ff 39px 41px);background-position:0 0,0 18px}
-.paper .to{font-size:24px;margin-bottom:6px}.paper .to b{color:var(--deep)}
+.paper .to{font-size:24px;margin-bottom:6px}
+.paper .tinput{font-family:'Gaegu','Jua',sans-serif;font-weight:700;font-size:24px;width:150px;border:0;border-bottom:3px dashed var(--red);background:#fff4f6;border-radius:6px 6px 0 0;text-align:center;color:var(--deep);outline:none}
+.paper .tinput.need{animation:shakeX .45s;background:#ffd6d3}
 .paper textarea{width:100%;min-height:240px;border:0;background:transparent;resize:vertical;font-family:'Gaegu','Jua',sans-serif;font-weight:700;font-size:23px;line-height:40px;color:var(--ink);outline:none;padding:0}
 .paper .from{text-align:right;font-size:22px;margin-top:4px}
 .paper .from input{font-family:'Gaegu','Jua',sans-serif;font-weight:700;font-size:22px;width:150px;border:0;border-bottom:3px dashed var(--red);background:transparent;text-align:center;color:var(--ink);outline:none}
@@ -370,6 +373,7 @@ section.view.on{display:block}
   .tabs-in{display:grid;grid-template-columns:1fr 1fr;gap:12px 8px}
   .paper{padding:18px 14px 12px 40px;background-image:linear-gradient(90deg,transparent 28px,#ffb3c7 28px,#ffb3c7 31px,transparent 31px),repeating-linear-gradient(#fffdf6 0 39px,#cfe6ff 39px 41px)}
   .paper textarea{font-size:20px}.bonus-head img{width:64px}
+  .paper .to{font-size:20px}.paper .tinput{width:110px;font-size:20px}.paper .from input{width:110px}
   .top-in .land{height:52px}
 }
 #loading{position:fixed;inset:0;z-index:250;display:none;align-items:center;justify-content:center;background:rgba(255,248,236,.55)}
@@ -426,7 +430,7 @@ footer{position:relative;z-index:2;margin-top:70px}
       <p class="say hand">초대장 번호를 넣고 들어와 줘!</p>
       <div class="fields">
         <label>이름<input id="inName" maxlength="12" placeholder="예) 김민준"></label>
-        <label>초대장 번호<input id="inPw" maxlength="12" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="DYB00000" style="text-transform:uppercase"></label>
+        <label>초대장 번호<input id="inPw" type="password" maxlength="12" autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="off" placeholder="DYB●●●●●"></label>
       </div>
       <button class="btn red enter" type="submit">🎁 입장하기</button>
       <div class="err" id="loginErr"></div>
@@ -561,7 +565,7 @@ footer{position:relative;z-index:2;margin-top:70px}
       <form class="letter" id="letterForm" autocomplete="off">
         <div class="env"><span class="stamp"><img src="img/xmas/chick.webp" alt=""></span><span class="seal">💌</span></div>
         <div class="paper">
-          <div class="to hand">To. <b id="toTeacher">담임</b> 선생님께</div>
+          <div class="to hand">To. <input id="lTeacher" class="tinput" maxlength="10" placeholder="선생님 이름"> 선생님께</div>
           <textarea id="lText" maxlength="600" placeholder="선생님께 하고 싶은 말을 적어 보세요 ✏️&#10;(10글자 이상)"></textarea>
           <div class="from hand">From. <input id="lWriter" maxlength="12" placeholder="내 이름"> 올림</div>
           <div class="lcount"><span id="lLen">0</span> / 600</div>
@@ -581,7 +585,7 @@ footer{position:relative;z-index:2;margin-top:70px}
             <input id="cText" maxlength="100" placeholder="예) 떡볶이가 정말 맛있었어요! 🌶️">
             <button class="btn green" type="submit" id="cSend">남기기</button>
           </form>
-          <div class="crule">※ 고운 말만 쓸 수 있어요. 나쁜 말을 쓰면 댓글이 바로 지워져요! · 1인 2개까지</div>
+          <div class="crule" id="cRule">※ 고운 말만 쓸 수 있어요. 나쁜 말을 쓰면 댓글이 바로 지워져요! · 1인 2개까지</div>
           <div class="game-msg" id="cMsg"></div>
         </div>
         <ul class="clist" id="cList"></ul>
@@ -672,7 +676,9 @@ async function api(action,extra={}){
   }
   try{
     const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(req)});
-    return await r.json();
+    const j=await r.json();
+    if(!j.ok&&/알 수 없는 요청/.test(j.err||'')) j.err='시트 코드가 예전 버전이에요. 선생님께 "새 버전 배포"를 부탁해 주세요!';
+    return j;
   }catch(e){return {ok:false,err:'인터넷 연결을 확인해 주세요! ('+e.message+')'}}
 }
 function loading(on,txt){ $('loading').classList.toggle('on',!!on); if(txt) $('ldTxt').textContent=txt; }
@@ -792,7 +798,8 @@ window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
 
 /* ================= WINNERS ================= */
 function renderWinners(){
-  const li=w=>`<li class="${w.grade==='1등'?'first':''}">${w.grade?`<span class="gr">${esc(w.grade)}</span>`:''}<img src="${imgSrc(w.img)}" alt="" onerror="${IMG_FALLBACK}"><span><b style="font-weight:400;color:var(--deep)">${esc(w.who)}</b> → ${esc(w.prize)}</span><span class="t">${esc(w.t.slice(0,11))}</span></li>`;
+  const li=w=>{const nm=w.nm||(w.who?w.who.replace(/\s*\(.*\)$/,''):E_mask(w.name||'')), g=w.g||((w.who||'').match(/\((.*)\)/)||[])[1]||'';
+    return `<li class="${w.grade==='1등'?'first':''}">${w.grade?`<span class="gr">${esc(w.grade)}</span>`:''}${g?`<span class="wg">(${esc(g)})</span>`:''}<b class="wn">${esc(nm)}</b><img src="${imgSrc(w.img)}" alt="" onerror="${IMG_FALLBACK}"><span class="arrow">→</span><span>${esc(w.prize)}</span><span class="t">${esc(w.t.slice(0,11))}</span></li>`};
   const bx=S.wins.filter(w=>w.game==='랜덤박스'), rl=S.wins.filter(w=>w.game==='룰렛');
   $('wlBox').innerHTML=bx.length?bx.map(li).join(''):'<li class="empty">아직 당첨자가 없어요. 첫 주인공이 되어 봐!</li>';
   $('wlRoul').innerHTML=rl.length?rl.map(li).join(''):'<li class="empty">아직 당첨 소식이 없어요!</li>';
@@ -837,7 +844,7 @@ const PEEKS=['rabbit','whale','turtle_happy','hamster','cat','chick'];
 function reveal(p){
   const jack=p.grade==='1등';
   showModal(`<img class="peek" src="img/xmas/${PEEKS[Math.floor(Math.random()*PEEKS.length)]}.webp" alt="">
-    <div class="tada">${jack?'대박!! 1등!!':'짜잔! 🎉'}</div><p class="who">${esc(S.user.name)} 님 당첨!</p>
+    <div class="tada">🎉 ${jack?'대박!! 1등!!':'짜잔!'} 🎉</div><p class="who">${esc(S.user.name)} 님 당첨!</p>
     <div class="rpic"><img src="${imgSrc(p.img)}" alt="" onerror="${IMG_FALLBACK}"></div>
     <div class="rname">${esc(p.name)}</div>${p.grade?`<span class="rgrade">${esc(p.grade)}</span>`:''}
     <p class="who" style="font-size:16px;color:#9a7a6a">선생님께 이 화면을 보여 주세요!</p>
@@ -884,12 +891,12 @@ $('spinBtn').onclick=async function(){
   // free spin until server answers
   let speed=0; const t0=performance.now();
   await new Promise(res=>{(function f(t){ speed=Math.min(14,speed+0.5); rot+=speed; setRot();
-    if(result&&t-t0>1200) return res(); requestAnimationFrame(f);})(performance.now())});
+    if(result&&t-t0>600) return res(); requestAnimationFrame(f);})(performance.now())});
   if(!result.ok){ spinning=false; this.disabled=false; $('roulMsg').textContent=result.err; if(result.state) applyState(result.state); return; }
   const n=S.roul.length, i=result.result.index, segA=360/n;
   const want=-(i*segA+segA/2)+(Math.random()-.5)*segA*.6;
-  let target=rot+360*3; target=target-((target%360)+360)%360+((want%360)+360)%360; if(target<rot+720) target+=360;
-  const start=rot, dist=target-start, dur=3800, ts=performance.now();
+  let target=rot+360*2; target=target-((target%360)+360)%360+((want%360)+360)%360; if(target<rot+360) target+=360;
+  const start=rot, dist=target-start, dur=1900, ts=performance.now();
   await new Promise(res=>{(function f(t){const p=Math.min(1,(t-ts)/dur), e=1-Math.pow(1-p,4); rot=start+dist*e; setRot(); if(p<1) requestAnimationFrame(f); else res();})(ts)});
   spinning=false; this.disabled=false;
   applyState(result.state); reveal(result.result.prize);
@@ -907,9 +914,10 @@ let lettersInit=false;
 function renderBonus(){
   const L=S.letter||{sent:0,max:1,points:1000};
   $('lpBig').textContent=won(L.points);
-  $('toTeacher').textContent=S.user.teacher||'담임';
   if(!lettersInit){ $('lWriter').value=S.user.name; lettersInit=true; }
   $('lStatus').innerHTML=L.sent<L.max?`처음 보내는 편지는 <b style="color:var(--red)">+${won(L.points)} 포인트</b>!`:`<span class="ok">✅ 편지 포인트는 이미 받았어요 (편지는 더 보낼 수 있어요)</span>`;
+  const CM=S.comment||{mine:0,max:2,points:500};
+  $('cRule').innerHTML=`${CM.mine===0?`<b style="color:var(--red)">첫 댓글을 남기면 +${won(CM.points)} 포인트!</b> · `:''}고운 말만 쓸 수 있어요. 나쁜 말은 바로 지워져요! · 1인 ${CM.max}개까지 (${CM.mine}/${CM.max})`;
   const C=S.comments||[];
   $('cList').innerHTML=C.length?C.map(c=>`<li class="${c.mine?'mine':''}"><span class="av"><img src="img/xmas/${AV[hashN(c.who+c.t)%AV.length]}.webp" alt=""></span>
     <div class="cb"><div class="meta">${esc(c.who)} · ${esc(c.t.slice(0,11))}${c.mine?'<span class="me">내 댓글</span>':''}</div>${esc(c.text)}</div></li>`).join('')
@@ -918,16 +926,17 @@ function renderBonus(){
 $('lText').addEventListener('input',()=>{$('lLen').textContent=Array.from($('lText').value).length});
 $('letterForm').addEventListener('submit',async e=>{
   e.preventDefault();
-  const text=$('lText').value.trim(), writer=$('lWriter').value.trim()||S.user.name;
+  const text=$('lText').value.trim(), writer=$('lWriter').value.trim()||S.user.name, teacher=$('lTeacher').value.trim();
+  if(!teacher){$('lMsg').textContent='받는 선생님 이름을 써 줘! ✏️';$('lTeacher').classList.remove('need');void $('lTeacher').offsetWidth;$('lTeacher').classList.add('need');$('lTeacher').focus();return}
   if(Array.from(text).length<10){$('lMsg').textContent='편지를 조금만 더 길게 써 줄래? (10글자 이상) ✏️';return}
-  if(E_bad(text+' '+writer)){$('lMsg').textContent='고운 말로 다시 써 줄래? 🙏';return}
+  if(E_bad(text+' '+writer+' '+teacher)){$('lMsg').textContent='고운 말로 다시 써 줄래? 🙏';return}
   $('lMsg').textContent=''; $('lSend').disabled=true; loading(true,'편지를 배달하는 중... 📮');
-  const r=await api('letter',{text,writer}); loading(false); $('lSend').disabled=false;
+  const r=await api('letter',{text,writer,teacher}); loading(false); $('lSend').disabled=false;
   if(!r.ok){$('lMsg').textContent=r.err; return}
   $('letterForm').classList.add('flyaway');
-  setTimeout(()=>{ $('letterForm').classList.remove('flyaway'); $('lText').value=''; $('lLen').textContent='0'; applyState(r.state);
+  setTimeout(()=>{ $('letterForm').classList.remove('flyaway'); $('lText').value=''; $('lTeacher').value=''; $('lLen').textContent='0'; applyState(r.state);
     showModal(`<img class="peek" src="img/xmas/rabbit_flower.webp" alt=""><div class="tada" style="font-size:36px">💌 편지 도착!</div>
-      <p class="who" style="font-size:22px;margin-top:10px">${esc(josaName(r.result.writer))} 편지는<br>선생님께 전달드릴게요!</p>
+      <p class="who" style="font-size:22px;margin-top:10px">${esc(josaName(r.result.writer))} 편지는<br>${esc(r.result.teacher||'')} 선생님께 전달드릴게요!</p>
       ${r.result.reward?`<div class="ono" style="border-color:var(--green2);color:var(--green)">+ ${won(r.result.reward)} 포인트 💰</div>`:'<p class="who" style="font-size:16px;color:#9a7a6a">(편지 포인트는 이미 받았어요)</p>'}
       <button class="btn red ok" data-close>확인</button>`,true);
     burst(innerWidth/2,innerHeight/2,150); },900);
@@ -941,6 +950,8 @@ $('cForm').addEventListener('submit',async e=>{
   if(!r.ok){$('cMsg').textContent=r.err; return}
   if(r.result&&r.result.bad){ sweepBad(text); applyState(r.state); return; }
   $('cText').value=''; applyState(r.state);
+  if(r.result&&r.result.reward){ showModal(`<img class="peek" src="img/xmas/turtle_happy.webp" alt=""><div class="tada" style="font-size:34px">💬 첫 댓글 고마워!</div>
+    <div class="ono" style="border-color:var(--green2);color:var(--green)">+ ${won(r.result.reward)} 포인트 💰</div><button class="btn red ok" data-close>확인</button>`,true); burst(innerWidth/2,innerHeight/2,120); }
   const first=$('cList').querySelector('li'); if(first){first.scrollIntoView({block:'nearest',behavior:'smooth'})}
 });
 function sweepBad(text){

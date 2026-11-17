@@ -6,14 +6,15 @@ var HEADERS = {
   box:    ['등급','상품명','이미지','가중치','남은수량','처음수량'],
   roul:   ['칸','상품명','이미지','남은수량'],
   wins:   ['시간','이름','게임','등급','상품명','이미지','학생코드'],
-  letters:['시간','학년','담임','이름','편지에 쓴 이름','내용','지급포인트','학생코드'],
-  comments:['시간','학년','이름','내용','상태','학생코드'],
+  letters:['선생님','학생 이름','내용','학년','시간','편지에 쓴 이름','명단 담임','지급포인트','학생코드'],
+  comments:['시간','학년','이름','내용','상태','지급포인트','학생코드'],
   banned: ['금지어']
 };
 var TAB_NAMES = {items:'물품',users:'학생',orders:'주문',box:'랜덤박스',roul:'룰렛',wins:'당첨기록',letters:'편지',comments:'댓글',banned:'금지어'};
 var LETTER_POINTS = 1000;   // 편지 한 번에 주는 포인트
 var LETTER_MAX = 1;         // 포인트를 받을 수 있는 편지 수 (1인)
 var COMMENT_MAX = 2;        // 1인 댓글 최대 개수
+var COMMENT_POINTS = 500;   // 첫 댓글 포인트
 
 var SEED = {
   items: [
@@ -102,10 +103,11 @@ function E_state(db, u){
       limit:E_limit(i), img:E_str(i['이미지']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
     roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
-    wins: db.wins.slice(-60).reverse().map(function(w){ return {t:E_str(w['시간']), who:E_who(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
+    wins: db.wins.slice(-60).reverse().map(function(w){ return {t:E_str(w['시간']), who:E_who(db,w), nm:E_mask(w['이름']), g:E_gradeOf(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
     comments: db.comments.filter(function(c){ var st = E_str(c['상태']); return st !== '숨김' && st !== '자동삭제' && !E_bad(E_str(c['내용']), E_bannedList(db)); })
       .slice(-60).reverse().map(function(c){ return {t:E_str(c['시간']), who:E_who(db,c), text:E_str(c['내용']), mine:E_isMe(c,u)}; }),
     letter: { sent: db.letters.filter(function(l){ return E_isMe(l,u); }).length, max: LETTER_MAX, points: LETTER_POINTS },
+    comment: { mine: db.comments.filter(function(c){ return E_isMe(c,u) && E_str(c['상태']) !== '자동삭제'; }).length, max: COMMENT_MAX, points: COMMENT_POINTS },
     myOrders: db.orders.filter(function(o){ return E_isMe(o,u); }).slice(-30).reverse().map(function(o){ return {t:E_str(o['시간']), no:E_str(o['주문번호']), name:E_str(o['상품명']), qty:E_num(o['수량']), sum:E_num(o['금액'])}; })
   };
 }
@@ -198,16 +200,17 @@ function E_bad(text, extra){
 
 /* ---------- 편지 / 댓글 ---------- */
 function E_letter(db, req, now){
-  var u = E_findUser(db, req.name, req.pw), text = E_str(req.text), writer = E_str(req.writer) || E_str(u['이름']);
+  var u = E_findUser(db, req.name, req.pw), text = E_str(req.text), writer = E_str(req.writer) || E_str(u['이름']), teacher = E_str(req.teacher);
+  if (!teacher) throw new Error('받는 선생님 이름을 써 줘! ✏️');
   if (Array.from(text).length < 10) throw new Error('편지를 조금만 더 길게 써 줄래? (10글자 이상) ✏️');
   if (Array.from(text).length > 600) throw new Error('편지가 너무 길어요! 600글자까지만 써 줘.');
-  if (E_bad(text + ' ' + writer, E_bannedList(db))) throw new Error('고운 말로 다시 써 줄래? 🙏');
+  if (E_bad(text + ' ' + writer + ' ' + teacher, E_bannedList(db))) throw new Error('고운 말로 다시 써 줄래? 🙏');
   var sent = db.letters.filter(function(l){ return E_isMe(l,u); }).length;
   var reward = sent < LETTER_MAX ? LETTER_POINTS : 0;
   if (reward) { u['포인트'] = E_num(u['포인트']) + reward; E_mark(u,'포인트'); }
-  var row = {'시간':now,'학년':E_str(u['학년']),'담임':E_str(u['담임']),'이름':E_str(u['이름']),'편지에 쓴 이름':writer,'내용':text,'지급포인트':reward,'학생코드':E_key(u)};
+  var row = {'선생님':teacher,'학생 이름':E_str(u['이름']),'내용':text,'학년':E_str(u['학년']),'시간':now,'편지에 쓴 이름':writer,'명단 담임':E_str(u['담임']),'지급포인트':reward,'학생코드':E_key(u)};
   db.letters.push(row); (db.newLetters = db.newLetters || []).push(row);
-  return { reward: reward, writer: writer };
+  return { reward: reward, writer: writer, teacher: teacher };
 }
 function E_comment(db, req, now){
   var u = E_findUser(db, req.name, req.pw), text = E_str(req.text).replace(/\s+/g,' ');
@@ -216,7 +219,9 @@ function E_comment(db, req, now){
   var mine = db.comments.filter(function(c){ return E_isMe(c,u) && E_str(c['상태']) !== '자동삭제'; }).length;
   var bad = E_bad(text, E_bannedList(db));
   if (!bad && mine >= COMMENT_MAX) throw new Error('댓글은 한 사람당 ' + COMMENT_MAX + '개까지 쓸 수 있어요!');
-  var row = {'시간':now,'학년':E_str(u['학년']),'이름':E_str(u['이름']),'내용':text,'상태':bad ? '자동삭제' : '','학생코드':E_key(u)};
+  var reward = (!bad && mine === 0) ? COMMENT_POINTS : 0;
+  if (reward) { u['포인트'] = E_num(u['포인트']) + reward; E_mark(u,'포인트'); }
+  var row = {'시간':now,'학년':E_str(u['학년']),'이름':E_str(u['이름']),'내용':text,'상태':bad ? '자동삭제' : '','지급포인트':reward,'학생코드':E_key(u)};
   db.comments.push(row); (db.newComments = db.newComments || []).push(row);
-  return bad ? { bad: true, msg: '나쁜 말이 있어서 댓글이 바로 지워졌어요 🧹 고운 말로 다시 써 줘!' } : { bad: false };
+  return bad ? { bad: true, msg: '나쁜 말이 있어서 댓글이 바로 지워졌어요 🧹 고운 말로 다시 써 줘!' } : { bad: false, reward: reward };
 }
