@@ -1,6 +1,6 @@
 /* ===== DYB Christmas Market — shared rules (used by the website preview AND the Google Apps Script) ===== */
 var HEADERS = {
-  items:  ['ID','카테고리','이름','가격','재고','1인최대','이미지','판매'],
+  items:  ['ID','카테고리','이름','가격','초기재고','현재고','당일판매수량','당일재고','1인최대','이미지','판매','설명'],
   users:  ['이름','비밀번호','포인트','학년','담임'],
   orders: ['시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
   box:    ['등급','상품명','이미지','가중치','남은수량','처음수량'],
@@ -16,18 +16,18 @@ var LETTER_MAX = 1;         // 포인트를 받을 수 있는 편지 수 (1인)
 var COMMENT_MAX = 2;        // 1인 댓글 최대 개수
 var COMMENT_POINTS = 500;   // 첫 댓글 포인트
 
+var SEED_ITEM_COLS = ['ID','카테고리','이름','가격','재고','1인최대','이미지','판매','설명'];
 var SEED = {
   items: [
     ['ticket_box','참가권','랜덤박스 참가권',1000,100,3,'ticket_box','Y'],
     ['ticket_roul','참가권','룰렛 게임 참가권',1000,100,3,'ticket_roul','Y'],
+    ['ticket_rps','참가권','선생님과 가위바위보 참가권',500,100,1,'ticket_rps','Y','선생님과 가위바위보를 해서 이기면 특별 간식 제공!'],
     ['c1','쿠폰','단어커트 +5',2500,100,1,'c1','Y'],
     ['c2','쿠폰','구두 면제권',3000,100,1,'c2','Y'],
     ['c3','쿠폰','온라인 숙제 면제권',3500,100,1,'c3','Y'],
     ['c4','쿠폰','한과목 숙제 면제권',4000,100,1,'c4','Y'],
     ['c5','쿠폰','재시험 면제권',4500,100,1,'c5','Y'],
     ['c6','쿠폰','전체 숙제 면제권',5000,100,1,'c6','Y'],
-    ['tteok','스페셜','떡볶이',3000,100,'','tteok','Y'],
-    ['roulette','스페셜','돌려돌려 랜덤 룰렛',1500,100,'','roulette','Y'],
     ['damla','간식','다믈라 젤리',500,100,'','damla','Y'],
     ['jam_straw','간식','재미스 딸기쿠키',2000,100,'','jam_straw','Y'],
     ['jam_apple','간식','재미스 사과쿠키',2000,100,'','jam_apple','Y'],
@@ -61,7 +61,7 @@ var SEED = {
     ['4등','다믈라 젤리','damla',40,100,100]
   ],
   roul: [
-    [1,'떡볶이','tteok',100],[2,'다믈라 젤리','damla',100],[3,'크리스마스 연필','pencil',100],
+    [1,'감자알칩','potato',100],[2,'다믈라 젤리','damla',100],[3,'크리스마스 연필','pencil',100],
     [4,'크리스마스 불빛반지','ring',100],[5,'초코칩 미니','chocochip',100],[6,'단어커트 +5','c1',100]
   ]
 };
@@ -99,8 +99,8 @@ function E_state(db, u){
   return {
     user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u), grade: E_str(u['학년']), teacher: E_str(u['담임']) },
     items: db.items.filter(E_onSale).map(function(i){ var id=E_str(i['ID']); return {
-      id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:E_num(i['재고']),
-      limit:E_limit(i), img:E_str(i['이미지']), mine:E_bought(db,u,id) }; }),
+      id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:E_stock(db,i).day, base:E_stock(db,i).base,
+      limit:E_limit(i), img:E_str(i['이미지']), desc:E_str(i['설명']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
     roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
     wins: db.wins.slice(-60).reverse().map(function(w){ return {t:E_str(w['시간']), who:E_who(db,w), nm:E_mask(w['이름']), g:E_gradeOf(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
@@ -119,8 +119,8 @@ function E_order(db, req, now){
   cart.forEach(function(c){
     var it = db.items.filter(function(i){ return E_str(i['ID']) === E_str(c.id) && E_onSale(i); })[0];
     if (!it) throw new Error('지금 팔지 않는 물건이 장바구니에 있어요.');
-    var q = Math.floor(E_num(c.qty)), stock = E_num(it['재고']), lim = E_limit(it);
-    if (stock < q) throw new Error(E_str(it['이름']) + ' 재고가 부족해요! (남은 수량 ' + stock + '개)');
+    var q = Math.floor(E_num(c.qty)), stock = E_stock(db,it).day, lim = E_limit(it);
+    if (stock < q) throw new Error(stock <= 0 ? E_str(it['이름']) + '은(는) 오늘 다 팔렸어요!' : E_str(it['이름']) + ' 수량이 부족해요! 조금만 줄여 주세요.');
     if (lim > 0 && E_bought(db,u,E_str(it['ID'])) + q > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
     total += E_num(it['가격']) * q; lines.push({it:it, q:q});
   });
@@ -128,7 +128,6 @@ function E_order(db, req, now){
   var no = 'D' + String(Date.now()).slice(-6) + Math.floor(Math.random()*90+10);
   u['포인트'] = E_num(u['포인트']) - total; E_mark(u,'포인트');
   lines.forEach(function(l){
-    l.it['재고'] = E_num(l.it['재고']) - l.q; E_mark(l.it,'재고');
     var o = {'시간':now,'주문번호':no,'이름':name,'상품ID':E_str(l.it['ID']),'상품명':E_str(l.it['이름']),'수량':l.q,'단가':E_num(l.it['가격']),'금액':E_num(l.it['가격'])*l.q,'주문후포인트':u['포인트'],'학생코드':E_key(u)};
     db.orders.push(o); (db.newOrders = db.newOrders || []).push(o);
   });
@@ -224,4 +223,20 @@ function E_comment(db, req, now){
   var row = {'시간':now,'학년':E_str(u['학년']),'이름':E_str(u['이름']),'내용':text,'상태':bad ? '자동삭제' : '','지급포인트':reward,'학생코드':E_key(u)};
   db.comments.push(row); (db.newComments = db.newComments || []).push(row);
   return bad ? { bad: true, msg: '나쁜 말이 있어서 댓글이 바로 지워졌어요 🧹 고운 말로 다시 써 줘!' } : { bad: false, reward: reward };
+}
+
+/* ---------- 재고: 초기재고 / 현재고(자동) / 당일판매수량 / 당일재고(자동) ---------- */
+function E_seedItems(){ return SEED.items.map(function(r){ var o = {}; SEED_ITEM_COLS.forEach(function(k,i){ o[k] = r[i] === undefined ? '' : r[i]; });
+  o['초기재고'] = o['재고']; o['현재고'] = o['재고']; o['당일판매수량'] = ''; o['당일재고'] = o['재고'];
+  return HEADERS.items.map(function(k){ return o[k] === undefined ? '' : o[k]; }); }); }
+function E_day(t){ return E_str(t).slice(0,5); }   // '12/17 10:00:00' → '12/17'
+function E_sold(db, id, today){
+  return db.orders.reduce(function(s,o){ return (E_str(o['상품ID']) === id && (!today || E_day(o['시간']) === today)) ? s + E_num(o['수량']) : s; }, 0);
+}
+function E_stock(db, i){
+  var id = E_str(i['ID']), init = E_num(i['초기재고']), cur = Math.max(0, init - E_sold(db, id));
+  var q = E_str(i['당일판매수량']);
+  if (q === '') return { init: init, cur: cur, day: cur, base: init };
+  var day = Math.max(0, Math.min(E_num(q) - E_sold(db, id, db.today), cur));
+  return { init: init, cur: cur, day: day, base: E_num(q) };
 }

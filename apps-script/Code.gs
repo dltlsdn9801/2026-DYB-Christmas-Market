@@ -1,6 +1,6 @@
 /* ===== DYB Christmas Market — shared rules (used by the website preview AND the Google Apps Script) ===== */
 var HEADERS = {
-  items:  ['ID','카테고리','이름','가격','재고','1인최대','이미지','판매'],
+  items:  ['ID','카테고리','이름','가격','초기재고','현재고','당일판매수량','당일재고','1인최대','이미지','판매','설명'],
   users:  ['이름','비밀번호','포인트','학년','담임'],
   orders: ['시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
   box:    ['등급','상품명','이미지','가중치','남은수량','처음수량'],
@@ -16,18 +16,18 @@ var LETTER_MAX = 1;         // 포인트를 받을 수 있는 편지 수 (1인)
 var COMMENT_MAX = 2;        // 1인 댓글 최대 개수
 var COMMENT_POINTS = 500;   // 첫 댓글 포인트
 
+var SEED_ITEM_COLS = ['ID','카테고리','이름','가격','재고','1인최대','이미지','판매','설명'];
 var SEED = {
   items: [
     ['ticket_box','참가권','랜덤박스 참가권',1000,100,3,'ticket_box','Y'],
     ['ticket_roul','참가권','룰렛 게임 참가권',1000,100,3,'ticket_roul','Y'],
+    ['ticket_rps','참가권','선생님과 가위바위보 참가권',500,100,1,'ticket_rps','Y','선생님과 가위바위보를 해서 이기면 특별 간식 제공!'],
     ['c1','쿠폰','단어커트 +5',2500,100,1,'c1','Y'],
     ['c2','쿠폰','구두 면제권',3000,100,1,'c2','Y'],
     ['c3','쿠폰','온라인 숙제 면제권',3500,100,1,'c3','Y'],
     ['c4','쿠폰','한과목 숙제 면제권',4000,100,1,'c4','Y'],
     ['c5','쿠폰','재시험 면제권',4500,100,1,'c5','Y'],
     ['c6','쿠폰','전체 숙제 면제권',5000,100,1,'c6','Y'],
-    ['tteok','스페셜','떡볶이',3000,100,'','tteok','Y'],
-    ['roulette','스페셜','돌려돌려 랜덤 룰렛',1500,100,'','roulette','Y'],
     ['damla','간식','다믈라 젤리',500,100,'','damla','Y'],
     ['jam_straw','간식','재미스 딸기쿠키',2000,100,'','jam_straw','Y'],
     ['jam_apple','간식','재미스 사과쿠키',2000,100,'','jam_apple','Y'],
@@ -61,7 +61,7 @@ var SEED = {
     ['4등','다믈라 젤리','damla',40,100,100]
   ],
   roul: [
-    [1,'떡볶이','tteok',100],[2,'다믈라 젤리','damla',100],[3,'크리스마스 연필','pencil',100],
+    [1,'감자알칩','potato',100],[2,'다믈라 젤리','damla',100],[3,'크리스마스 연필','pencil',100],
     [4,'크리스마스 불빛반지','ring',100],[5,'초코칩 미니','chocochip',100],[6,'단어커트 +5','c1',100]
   ]
 };
@@ -99,8 +99,8 @@ function E_state(db, u){
   return {
     user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u), grade: E_str(u['학년']), teacher: E_str(u['담임']) },
     items: db.items.filter(E_onSale).map(function(i){ var id=E_str(i['ID']); return {
-      id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:E_num(i['재고']),
-      limit:E_limit(i), img:E_str(i['이미지']), mine:E_bought(db,u,id) }; }),
+      id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:E_stock(db,i).day, base:E_stock(db,i).base,
+      limit:E_limit(i), img:E_str(i['이미지']), desc:E_str(i['설명']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
     roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
     wins: db.wins.slice(-60).reverse().map(function(w){ return {t:E_str(w['시간']), who:E_who(db,w), nm:E_mask(w['이름']), g:E_gradeOf(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
@@ -119,8 +119,8 @@ function E_order(db, req, now){
   cart.forEach(function(c){
     var it = db.items.filter(function(i){ return E_str(i['ID']) === E_str(c.id) && E_onSale(i); })[0];
     if (!it) throw new Error('지금 팔지 않는 물건이 장바구니에 있어요.');
-    var q = Math.floor(E_num(c.qty)), stock = E_num(it['재고']), lim = E_limit(it);
-    if (stock < q) throw new Error(E_str(it['이름']) + ' 재고가 부족해요! (남은 수량 ' + stock + '개)');
+    var q = Math.floor(E_num(c.qty)), stock = E_stock(db,it).day, lim = E_limit(it);
+    if (stock < q) throw new Error(stock <= 0 ? E_str(it['이름']) + '은(는) 오늘 다 팔렸어요!' : E_str(it['이름']) + ' 수량이 부족해요! 조금만 줄여 주세요.');
     if (lim > 0 && E_bought(db,u,E_str(it['ID'])) + q > lim) throw new Error(E_str(it['이름']) + '은(는) 한 사람당 ' + lim + '개까지만 살 수 있어요!');
     total += E_num(it['가격']) * q; lines.push({it:it, q:q});
   });
@@ -128,7 +128,6 @@ function E_order(db, req, now){
   var no = 'D' + String(Date.now()).slice(-6) + Math.floor(Math.random()*90+10);
   u['포인트'] = E_num(u['포인트']) - total; E_mark(u,'포인트');
   lines.forEach(function(l){
-    l.it['재고'] = E_num(l.it['재고']) - l.q; E_mark(l.it,'재고');
     var o = {'시간':now,'주문번호':no,'이름':name,'상품ID':E_str(l.it['ID']),'상품명':E_str(l.it['이름']),'수량':l.q,'단가':E_num(l.it['가격']),'금액':E_num(l.it['가격'])*l.q,'주문후포인트':u['포인트'],'학생코드':E_key(u)};
     db.orders.push(o); (db.newOrders = db.newOrders || []).push(o);
   });
@@ -226,32 +225,49 @@ function E_comment(db, req, now){
   return bad ? { bad: true, msg: '나쁜 말이 있어서 댓글이 바로 지워졌어요 🧹 고운 말로 다시 써 줘!' } : { bad: false, reward: reward };
 }
 
+/* ---------- 재고: 초기재고 / 현재고(자동) / 당일판매수량 / 당일재고(자동) ---------- */
+function E_seedItems(){ return SEED.items.map(function(r){ var o = {}; SEED_ITEM_COLS.forEach(function(k,i){ o[k] = r[i] === undefined ? '' : r[i]; });
+  o['초기재고'] = o['재고']; o['현재고'] = o['재고']; o['당일판매수량'] = ''; o['당일재고'] = o['재고'];
+  return HEADERS.items.map(function(k){ return o[k] === undefined ? '' : o[k]; }); }); }
+function E_day(t){ return E_str(t).slice(0,5); }   // '12/17 10:00:00' → '12/17'
+function E_sold(db, id, today){
+  return db.orders.reduce(function(s,o){ return (E_str(o['상품ID']) === id && (!today || E_day(o['시간']) === today)) ? s + E_num(o['수량']) : s; }, 0);
+}
+function E_stock(db, i){
+  var id = E_str(i['ID']), init = E_num(i['초기재고']), cur = Math.max(0, init - E_sold(db, id));
+  var q = E_str(i['당일판매수량']);
+  if (q === '') return { init: init, cur: cur, day: cur, base: init };
+  var day = Math.max(0, Math.min(E_num(q) - E_sold(db, id, db.today), cur));
+  return { init: init, cur: cur, day: day, base: E_num(q) };
+}
+
 /* ===== Google Apps Script 부분 (시트와 연결) ===== */
 
 /** 처음 한 번만 실행: 탭과 샘플 데이터를 만들어요. 이미 내용이 있는 탭은 건드리지 않아요. */
 function setup() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var seedFor = { items: SEED.items, users: SEED.users, orders: [], box: SEED.box, roul: SEED.roul, wins: [], letters: [], comments: [], banned: [] };
+  var seedFor = { items: E_seedItems(), users: SEED.users, orders: [], box: SEED.box, roul: SEED.roul, wins: [], letters: [], comments: [], banned: [] };
   var colors = { items:'#e5403a', users:'#1f7a4d', orders:'#b50005', box:'#ffc83d', roul:'#2fa36b', wins:'#7cc8ff', letters:'#ff8fab', comments:'#9575cd', banned:'#616161' };
   Object.keys(TAB_NAMES).forEach(function(k){
     var sh = ss.getSheetByName(TAB_NAMES[k]) || ss.insertSheet(TAB_NAMES[k]);
-    if (sh.getLastRow() > 0) { if (k === 'letters') reorderCols_(sh, HEADERS[k]); ensureCols_(sh, HEADERS[k]); return; }
+    if (sh.getLastRow() > 0) { if (k === 'items') migrateStock_(sh); if (k === 'letters' || k === 'items') reorderCols_(sh, HEADERS[k]); ensureCols_(sh, HEADERS[k]); return; }
     var h = HEADERS[k];
     sh.getRange(1,1,1,h.length).setValues([h]).setFontWeight('bold').setBackground(colors[k]).setFontColor(k==='box'?'#3a2420':'#ffffff');
     sh.setFrozenRows(1);
     if (k === 'users') sh.getRange('B:B').setNumberFormat('@');
     var rows = seedFor[k];
-    if (rows.length) sh.getRange(2,1,rows.length,h.length).setValues(rows.map(function(r){ return r.map(function(v){ return v===''?'':v; }); }));
+    if (rows.length) sh.getRange(2,1,rows.length,h.length).setValues(rows.map(function(r){ var o = r.slice(0, h.length); while (o.length < h.length) o.push(''); return o; }));
     sh.autoResizeColumns(1, h.length);
   });
   setupRosters_();
+  migrate_(ss);
   var first = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1');
   if (first && first.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(first);
   SpreadsheetApp.getUi && SpreadsheetApp.flush();
 }
 
 function loadDB_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), db = { _sh:{}, _hdr:{}, newOrders:[], newWins:[] };
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), db = { _sh:{}, _hdr:{}, newOrders:[], newWins:[], today: Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM/dd') };
   Object.keys(TAB_NAMES).forEach(function(k){
     var sh = ss.getSheetByName(TAB_NAMES[k]);
     if (!sh) { setup(); sh = ss.getSheetByName(TAB_NAMES[k]); }
@@ -259,7 +275,7 @@ function loadDB_() {
     var vals = sh.getDataRange().getValues(), h = vals[0].map(function(x){ return String(x).trim(); });
     db._sh[k] = sh; db._hdr[k] = h;
     db[k] = vals.slice(1).map(function(r, i){
-      var o = { _r: i + 2 }; h.forEach(function(name, j){ o[name] = r[j]; }); return o;
+      var o = { _r: i + 2 }; h.forEach(function(name, j){ var v = r[j]; o[name] = (v instanceof Date) ? Utilities.formatDate(v, 'Asia/Seoul', 'MM/dd HH:mm:ss') : v; }); return o;
     }).filter(function(o){ return h.some(function(name){ return o[name] !== '' && o[name] !== null; }); });
   });
   // 랜덤박스 '처음수량'이 비어 있으면 지금 남은수량으로 채워요 (재고 퍼센트 계산용)
@@ -279,8 +295,9 @@ function saveDB_(db) {
   [['orders', db.newOrders], ['wins', db.newWins], ['letters', db.newLetters], ['comments', db.newComments]].forEach(function(p){
     var k = p[0], rows = p[1] || [];
     if (!rows.length) return;
-    var h = db._hdr[k], sh = db._sh[k];
-    sh.getRange(sh.getLastRow() + 1, 1, rows.length, h.length).setValues(rows.map(function(o){ return h.map(function(name){ return o[name] === undefined ? '' : o[name]; }); }));
+    var h = db._hdr[k], sh = db._sh[k], start = sh.getLastRow() + 1, tc = h.indexOf('시간') + 1;
+    if (tc > 0) sh.getRange(start, tc, rows.length, 1).setNumberFormat('@');
+    sh.getRange(start, 1, rows.length, h.length).setValues(rows.map(function(o){ return h.map(function(name){ return o[name] === undefined ? '' : o[name]; }); }));
   });
   SpreadsheetApp.flush();
 }
@@ -297,10 +314,11 @@ function doPost(e) {
   try {
     if (write) lock.waitLock(25000);
     var db = loadDB_(), now = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM/dd HH:mm:ss'), res = { ok: true };
+    writeStock_(db);
     if (req.action === 'login' || req.action === 'state') {
       res.state = E_state(db, E_findUser(db, req.name, req.pw));
     } else if (req.action === 'order') {
-      res.result = E_order(db, req, now); saveDB_(db);
+      res.result = E_order(db, req, now); saveDB_(db); writeStock_(db);
       res.state = E_state(db, E_findUser(db, req.name, req.pw));
     } else if (req.action === 'play') {
       res.result = E_play(db, req, now, Math.random); saveDB_(db);
@@ -341,6 +359,69 @@ function reorderCols_(sh, want) {
   var out = [order].concat(v.slice(1).map(function(r){ return order.map(function(name){ var i = h.indexOf(name); return i >= 0 ? r[i] : ''; }); }));
   sh.getRange(1,1,lr,Math.max(lc, order.length)).clearContent();
   sh.getRange(1,1,out.length,order.length).setValues(out);
+}
+
+/** 이미 쓰던 시트를 새 규칙에 맞게 고쳐요 (여러 번 실행해도 안전해요). */
+function migrate_(ss) {
+  // 1) 스페셜 메뉴(떡볶이·돌려돌려 랜덤 룰렛) 물품 삭제
+  var it = ss.getSheetByName(TAB_NAMES.items);
+  if (it && it.getLastRow() > 1) {
+    var h = it.getRange(1,1,1,it.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    var ic = h.indexOf('ID'), cc = h.indexOf('카테고리');
+    var v = it.getRange(2,1,it.getLastRow()-1,h.length).getValues();
+    for (var i = v.length - 1; i >= 0; i--) {
+      var id = String(v[i][ic]).trim();
+      if (id === 'tteok' || id === 'roulette' || String(v[i][cc]).trim() === '스페셜') it.deleteRow(i + 2);
+    }
+    // 2) 가위바위보 참가권 추가 (없을 때만), 룰렛 참가권 바로 아래에
+    v = it.getLastRow() > 1 ? it.getRange(2,1,it.getLastRow()-1,h.length).getValues() : [];
+    var ids = v.map(function(r){ return String(r[ic]).trim(); });
+    if (ids.indexOf('ticket_rps') < 0) {
+      var seed = E_seedItems().filter(function(r){ return r[0] === 'ticket_rps'; })[0];
+      var row = h.map(function(name){ var j = HEADERS.items.indexOf(name); return j >= 0 && seed[j] !== undefined ? seed[j] : ''; });
+      var at = ids.indexOf('ticket_roul'); at = at >= 0 ? at + 2 : 1;
+      it.insertRowAfter(at); it.getRange(at + 1, 1, 1, h.length).setValues([row]);
+    }
+  }
+  // 3) 룰렛 칸의 떡볶이 → 감자알칩
+  var ro = ss.getSheetByName(TAB_NAMES.roul);
+  if (ro && ro.getLastRow() > 1) {
+    var rh = ro.getRange(1,1,1,ro.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    var nc = rh.indexOf('상품명'), mc = rh.indexOf('이미지');
+    var rv = ro.getRange(2,1,ro.getLastRow()-1,rh.length).getValues();
+    rv.forEach(function(r, i){ if (String(r[nc]).trim() === '떡볶이') { ro.getRange(i+2, nc+1).setValue('감자알칩'); if (mc >= 0) ro.getRange(i+2, mc+1).setValue('potato'); } });
+  }
+}
+
+/** 물품 탭의 현재고·당일재고 칸을 계산해서 채워요 (바뀐 칸만 씀). */
+function writeStock_(db) {
+  var h = db._hdr.items, sh = db._sh.items, cc = h.indexOf('현재고') + 1, dc = h.indexOf('당일재고') + 1;
+  if (!cc || !dc) return;
+  db.items.forEach(function(i){
+    if (!E_str(i['ID'])) return;
+    var st = E_stock(db, i);
+    if (E_num(i['현재고']) !== st.cur || E_str(i['현재고']) === '') { sh.getRange(i._r, cc).setValue(st.cur); i['현재고'] = st.cur; }
+    if (E_num(i['당일재고']) !== st.day || E_str(i['당일재고']) === '') { sh.getRange(i._r, dc).setValue(st.day); i['당일재고'] = st.day; }
+  });
+}
+/** 메뉴/편집 시 재고 다시 계산 */
+function 재고반영() { var db = loadDB_(); writeStock_(db); SpreadsheetApp.flush(); }
+
+/** 예전 '재고' 칸 → 초기재고(100)·현재고·당일판매수량·당일재고 칸으로 나눠요 (한 번만). */
+function migrateStock_(sh) {
+  var lc = sh.getLastColumn(); if (lc < 1) return;
+  var h = sh.getRange(1,1,1,lc).getValues()[0].map(function(x){ return String(x).trim(); });
+  if (h.indexOf('초기재고') >= 0) return;
+  if (sh.getMaxRows() > 1) sh.getRange(2, 1, sh.getMaxRows() - 1, sh.getMaxColumns()).clearDataValidations();
+  var oc = h.indexOf('재고');
+  if (oc >= 0) sh.getRange(1, oc + 1).setValue('현재고');
+  ['초기재고','당일판매수량','당일재고'].forEach(function(name){ lc++; sh.getRange(1, lc).setValue(name); });
+  var n = sh.getLastRow() - 1;
+  if (n > 0) {
+    var ic = h.indexOf('ID') + 1, ids = sh.getRange(2, ic, n, 1).getValues();
+    var initCol = lc - 2;
+    sh.getRange(2, initCol, n, 1).setValues(ids.map(function(r){ return [String(r[0]).trim() ? 100 : '']; }));
+  }
 }
 
 /* ===== 학년 명단 (다른 선생님들이 입력) → 학생 탭 자동 반영 ===== */
@@ -466,6 +547,7 @@ function onEdit(e) {
     var sh = e && e.range && e.range.getSheet(); if (!sh) return;
     var isRoster = ROSTERS.some(function(R){ return R.tab === sh.getName(); });
     if (isRoster && e.range.getColumn() <= R_IN) 명단반영();
+    if (sh.getName() === TAB_NAMES.items) 재고반영();
   } catch (x) {}
 }
 
@@ -473,6 +555,7 @@ function onEdit(e) {
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('🎄 마켓 관리')
     .addItem('명단 → 학생 탭 반영하기 (남은 포인트 새로고침)', '명단반영')
+    .addItem('재고 다시 계산하기', '재고반영')
     .addSeparator()
     .addItem('지금 탭: 이름순 정렬 (가나다)', '이름순정렬')
     .addItem('지금 탭: 선생님 → 이름순 정렬 (명단·편지)', '담임순정렬')
@@ -500,7 +583,7 @@ function 꾸미기() {
   명단반영();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var NOTES = {
-    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 스페셜 / 간식 / 문구 중 하나','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','재고':'남은 수량. 주문되면 자동으로 줄어요','1인최대':'한 사람이 살 수 있는 최대 개수. 비워 두면 제한 없음','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에서 숨기기'},
+    items: {'ID':'사이트가 물건을 구분하는 이름표예요. 이미 팔린 물건은 바꾸지 마세요!','카테고리':'참가권 / 쿠폰 / 간식 / 문구 중 하나','설명':'적어 두면 사이트 물건 이름 옆에 ? 버튼이 생기고, 누르면 이 설명이 보여요','초기재고':'처음 준비한 전체 수량 (직접 입력)','현재고':'자동: 초기재고 − 지금까지 팔린 수량','당일판매수량':'오늘 팔 수량 (직접 입력). 비워 두면 현재고만큼 팔아요','당일재고':'자동: 당일판매수량 − 오늘 팔린 수량. 사이트에는 이 숫자로 남은 정도가 보여요','이름':'사이트에 보이는 물건 이름','가격':'숫자만 (예: 3000)','1인최대':'한 사람이 살 수 있는 최대 개수. 비워 두면 제한 없음','이미지':'사진 파일 이름 (보통 ID와 같아요)','판매':'Y = 판매 / N = 사이트에서 숨기기'},
     users: {'이름':'학생이 입장할 때 쓰는 이름. 같은 이름 두 명은 안 돼요!','비밀번호':'초대장 번호','포인트':'남은 포인트. 주문하면 자동으로 줄어요'},
     box:   {'등급':'1등, 2등 …','가중치':'숫자가 클수록 잘 나와요 (확률)','남은수량':'0이 되면 더 이상 안 나와요'},
     roul:  {'칸':'룰렛 칸 번호 (순서)','남은수량':'0이 되면 회색 칸이 되고 안 나와요'},
@@ -515,7 +598,7 @@ function 꾸미기() {
     orders:{head:'#b50005',band:'#fff6f0',tab:'#b50005'}, box:{head:'#ffc83d',band:'#fff9e3',tab:'#ffc83d'},
     roul:{head:'#2fa36b',band:'#effaf3',tab:'#2fa36b'}, wins:{head:'#3a8dde',band:'#eef6ff',tab:'#3a8dde'}
   };
-  var WIDTH = {'ID':110,'카테고리':80,'이름':170,'가격':90,'재고':70,'1인최대':70,'이미지':100,'판매':60,'비밀번호':90,'포인트':100,
+  var WIDTH = {'ID':110,'카테고리':80,'이름':170,'가격':90,'초기재고':80,'현재고':80,'당일판매수량':100,'당일재고':80,'1인최대':70,'이미지':100,'판매':60,'비밀번호':90,'포인트':100,
     '시간':120,'주문번호':100,'상품ID':100,'상품명':170,'수량':60,'단가':80,'금액':90,'주문후포인트':110,'등급':60,'가중치':70,'남은수량':80,'칸':50,'게임':80};
   var money = '#,##0"원"', count = '#,##0"개"';
 
@@ -525,6 +608,7 @@ function 꾸미기() {
     var n = h.length, rows = Math.max(sh.getMaxRows()-1, 1), t = THEME[k];
     var col = function(name){ return h.indexOf(name) + 1; };
     var body = function(name){ var c = col(name); return c ? sh.getRange(2, c, rows, 1) : null; };
+    sh.getRange(2,1,rows,sh.getMaxColumns()).clearDataValidations();
 
     sh.setTabColor(t.tab);
     sh.setFrozenRows(1);
@@ -547,18 +631,19 @@ function 꾸미기() {
 
     // number formats
     ['가격','포인트','단가','금액','주문후포인트'].forEach(function(nm){ var r = body(nm); if (r) r.setNumberFormat(money); });
-    ['재고','남은수량'].forEach(function(nm){ var r = body(nm); if (r) r.setNumberFormat(count); });
+    ['초기재고','현재고','당일판매수량','당일재고','남은수량'].forEach(function(nm){ var r = body(nm); if (r) r.setNumberFormat(count); });
+    if (k === 'items') ['현재고','당일재고'].forEach(function(nm){ var c = col(nm); if (c) { sh.getRange(1,c).setBackground('#9e9e9e'); sh.getRange(2,c,rows,1).setFontColor('#555555').setFontWeight('bold'); } });
     if (k === 'users') { var pw = body('비밀번호'); if (pw) pw.setNumberFormat('@'); }
 
     // input rules (stop text in number cells)
     var num = SpreadsheetApp.newDataValidation().requireNumberGreaterThanOrEqualTo(0).setAllowInvalid(false)
       .setHelpText('숫자만 넣어 주세요 (0 이상)').build();
-    ['가격','재고','1인최대','포인트','가중치','남은수량'].forEach(function(nm){
+    ['가격','초기재고','당일판매수량','1인최대','포인트','가중치','남은수량'].forEach(function(nm){
       if (k==='orders'||k==='wins') return; var r = body(nm); if (r) r.setDataValidation(num);
     });
     if (k === 'items') {
       var yn = body('판매'); if (yn) yn.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['Y','N'], true).setAllowInvalid(false).build());
-      var cat = body('카테고리'); if (cat) cat.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['참가권','쿠폰','스페셜','간식','문구'], true).setAllowInvalid(true).build());
+      var cat = body('카테고리'); if (cat) cat.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['참가권','쿠폰','간식','문구'], true).setAllowInvalid(true).build());
     }
     if (k === 'comments') {
       var stc = body('상태'); if (stc) stc.setDataValidation(SpreadsheetApp.newDataValidation().requireValueInList(['','숨김','자동삭제'], true).setAllowInvalid(true).build());
@@ -575,7 +660,7 @@ function 꾸미기() {
 
     // colour rules
     var rules = [];
-    var stockCol = col('재고') || col('남은수량');
+    var stockCol = col('당일재고') || col('남은수량');
     if (stockCol && (k==='items'||k==='box'||k==='roul')) {
       var L = String.fromCharCode(64 + stockCol), whole = sh.getRange(2,1,rows,n);
       rules.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND($'+L+'2<>"",$'+L+'2<=0)').setBackground('#d9d9d9').setFontColor('#888888').setStrikethrough(true).setRanges([whole]).build());
@@ -604,7 +689,8 @@ function 꾸미기() {
   g.clear(); g.setTabColor('#ffc83d'); g.setHiddenGridlines(true);
   var lines = [
     ['🎄 DYB 크리스마스 마켓 관리 시트'],[''],
-    ['📦 물품','가격·재고·1인최대·판매(Y/N)를 바꾸면 20초 안에 사이트에 반영돼요. 재고 10개 이하는 빨강, 0개는 회색이에요.'],
+    ['📦 물품','초기재고·당일판매수량·가격·1인최대·판매(Y/N)는 직접 입력해요. 현재고·당일재고(회색 제목)는 자동으로 계산돼요. 사이트에는 당일재고로 남은 정도가 문구로 보여요.'],
+    ['','예) 초기재고 30, 당일판매수량 10 → 오늘은 10개까지만 팔려요. 당일판매수량을 비우면 남은 수량을 모두 팔아요. 날짜가 바뀌면 당일재고가 자동으로 다시 채워져요.'],
     ['📝 학년 명단','4·5·6학년 명단 탭에 담임선생님·이름·포인트만 넣으면 학생 탭에 자동으로 들어가고 초대장 번호(DYB+숫자 5자리)가 만들어져요. 이름을 지우거나 줄을 삭제하면 번호와 학생 정보도 함께 지워져요.'],
     ['','포인트 숫자를 나중에 올리면 그만큼 추가 지급돼요. 정렬은 제목줄의 ▼(필터) 또는 위쪽 [🎄 마켓 관리] 메뉴에서!'],
     ['🧒 학생','명단에서 자동으로 채워져요. 샘플 학생(비밀번호 1234)은 연습용이니 행사 전에 지워도 돼요.'],
@@ -622,7 +708,7 @@ function 꾸미기() {
   g.getRange('A1').setFontSize(20).setFontWeight('bold').setFontColor('#b50005');
   g.getRange(3,1,lines.length-2,1).setFontWeight('bold').setFontSize(12);
   g.getRange(3,2,lines.length-2,1).setFontSize(12).setWrap(true);
-  g.getRange('A14:B15').setBackground('#ffe9e7'); g.getRange('A16:B16').setBackground('#fff6d6'); g.getRange('A5:B6').setBackground('#eef6ff');
+  g.getRange('A15:B16').setBackground('#ffe9e7'); g.getRange('A17:B17').setBackground('#fff6d6'); g.getRange('A5:B6').setBackground('#eef6ff');
   g.setColumnWidth(1,120); g.setColumnWidth(2,620);
   ss.setActiveSheet(g); ss.moveActiveSheet(1);
   SpreadsheetApp.flush();
