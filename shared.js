@@ -177,7 +177,7 @@ var BAD_KO = ['시발','씨발','씨팔','시팔','씨빨','시빨','쓰발','�
   '찐따','장애인','등신','멍청','바보','쪼다','머저리','빡대가리','대가리','돼지새','뒤져','뒤지','죽어','죽을래','죽여','자살','꺼지',
   '썅','쌍놈','쌍년','년아','놈아','니가뭔데','패드립','섹스','야동','젖꼭','sexy','엉덩이','변태','성기','일베','틀딱','한남','김치녀','메갈','급식충','맘충','충새끼',
   'tlqkf','tlqk','qudtls','whssk','wlfkf','rotoRl','rotori','ehfdk','ckwl','alcls','tq'];
-var BAD_EN = ['fuck','fuk','fck','phuck','fvck','shit','sh1t','bitch','biatch','b1tch','asshole','bastard','cunt','motherf','dickhead','nigg','whore','slut','pussy','retard','faggot','bullshit','jackass','wanker','twat','douche','stfu','wtf','porn','penis','vagina','boob'];
+var BAD_EN = ['sibal','ssibal','shibal','sibbal','byungsin','byeongsin','jonna','jonnna','gaesaekki','gaesaeki','michin','jiral','fuck','fuk','fck','phuck','fvck','shit','sh1t','bitch','biatch','b1tch','asshole','bastard','cunt','motherf','dickhead','nigg','whore','slut','pussy','retard','faggot','bullshit','jackass','wanker','twat','douche','stfu','wtf','porn','penis','vagina','boob'];
 var BAD_EN_WORD = ['ass','dick','damn','hell','crap','sex','idiot','stupid','dumb','loser','ugly','shut up','kill','die','gay','fat','moron','suck','sucks','screw'];
 function E_bannedList(db){ return (db.banned || []).map(function(b){ return E_str(b['금지어']); }).filter(String); }
 function E_norm(t){
