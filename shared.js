@@ -13,7 +13,7 @@ var HEADERS = {
 var TAB_NAMES = {items:'물품',users:'학생',orders:'주문',box:'랜덤박스',roul:'룰렛',wins:'당첨기록',letters:'편지',comments:'댓글',banned:'금지어'};
 var LETTER_POINTS = 1000;   // 편지 한 번에 주는 포인트
 var LETTER_MAX = 1;         // 포인트를 받을 수 있는 편지 수 (1인)
-var COMMENT_MAX = 5;        // 1인 댓글 최대 개수
+var COMMENT_MAX = 2;        // 1인 댓글 최대 개수
 
 var SEED = {
   items: [
