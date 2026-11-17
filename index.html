@@ -51,7 +51,7 @@ img{max-width:100%;display:block}
 .lights svg{width:100%;height:40px}
 .bulb{animation:blink 1.6s infinite}.bulb:nth-child(2n){animation-delay:.5s}.bulb:nth-child(3n){animation-delay:1s}
 #intro .ground{position:absolute;left:-5%;right:-5%;bottom:-40px;height:140px;background:#fff;border-radius:50% 50% 0 0/60px 60px 0 0;box-shadow:0 -8px 0 rgba(255,255,255,.45)}
-.intro-logo{position:absolute;top:42px;left:50%;transform:translateX(-50%);background:#fff;border:3px solid var(--line);border-radius:30px;padding:6px 18px 4px;box-shadow:0 5px 0 var(--line);z-index:5;width:min(230px,52vw)}
+.intro-logo{position:absolute;top:40px;left:50%;transform:translateX(-50%);background:#fff;border:3px solid var(--line);border-radius:30px;padding:6px 18px 4px;box-shadow:0 5px 0 var(--line);z-index:5;height:120px;width:auto}
 .stage{position:absolute;left:50%;top:max(470px,55vh);bottom:64px;transform:translateX(-50%);width:min(420px,72vw);perspective:1400px;z-index:4}
 .door-frame{position:absolute;inset:-16px -16px 0;background:#7a3b16;border:3px solid var(--line);border-radius:240px 240px 0 0;box-shadow:inset 0 0 0 9px #5c2b10}
 .door-light{position:absolute;inset:0;border-radius:226px 226px 0 0;background:radial-gradient(circle at 50% 60%,#fff7c2 0%,#ffd66b 45%,#ff9e3d 100%);overflow:hidden}
@@ -66,10 +66,10 @@ img{max-width:100%;display:block}
 .wreath{position:absolute;top:10%;left:50%;transform:translateX(-50%);width:36%;aspect-ratio:1;border-radius:50%;border:13px dotted #0f5a34;box-shadow:0 0 0 6px #2fa36b inset,0 0 0 4px #2fa36b}
 .wreath::after{content:"";position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);width:30px;height:22px;background:var(--red);clip-path:polygon(0 0,50% 40%,100% 0,100% 100%,50% 60%,0 100%)}
 .stage.open .door.l{transform:rotateY(-108deg)}.stage.open .door.r{transform:rotateY(108deg)}
-.sign{position:absolute;top:min(150px,19vh);left:50%;transform:translateX(-50%);z-index:8;width:min(560px,92vw);text-align:center;transition:opacity .5s,transform .5s}
+.sign{position:absolute;top:210px;left:50%;transform:translateX(-50%);z-index:8;width:min(560px,92vw);text-align:center;transition:opacity .5s,transform .5s}
 .sign.open{opacity:0;transform:translate(-50%,-30px) scale(.9);pointer-events:none}
 .sign-board{background:var(--cream);border:3px solid var(--line);border-radius:30px;padding:16px 18px 18px;box-shadow:0 8px 0 var(--line);position:relative}
-.sign-board::before,.sign-board::after{content:"";position:absolute;top:-34px;width:7px;height:34px;background:#7a3b16;border:2px solid var(--line)}
+.sign-board::before,.sign-board::after{content:"";position:absolute;top:-46px;width:7px;height:46px;background:#7a3b16;border:2px solid var(--line)}
 .sign-board::before{left:24%}.sign-board::after{right:24%}
 .sign-board.shake{animation:shakeX .45s}
 .sign h1{font-size:clamp(26px,5.7vw,40px);line-height:1.2;color:var(--deep)}
@@ -97,7 +97,7 @@ img{max-width:100%;display:block}
 .t1{left:-20px;bottom:56px;width:min(200px,25vw)}.t2{right:-20px;bottom:56px;width:min(200px,25vw)}
 .star{position:absolute;color:#fff;animation:twinkle 2s infinite;z-index:2}
 @media (max-width:640px){
-  .g2,.g5{display:none}.stage{top:max(500px,60vh)}.sign{top:120px}
+  .g2,.g5{display:none}.stage{top:max(500px,60vh)}.sign{top:172px}
   .t1,.t2{width:30vw;bottom:64px}.intro-logo{top:38px}
 }
 
@@ -333,7 +333,7 @@ section.view.on{display:block}
   .preview-badge{font-size:13px}.btn.small{font-size:15px;padding:4px 10px 2px}
   .tabs-in{gap:6px}.tab{font-size:16px;padding:5px 2px 3px;border-radius:16px}.tab img{width:30px;height:30px;margin-top:-10px}
   .rule ol{font-size:18px;padding-right:62px}.rule .mascot{width:62px}.rule h3{font-size:24px}
-  .intro-logo{width:150px;top:44px}.sign{top:150px}.hint{font-size:13px}
+  .intro-logo{height:84px;width:auto;top:44px}.sign{top:172px}.fields input{width:min(260px,70vw)}.hint{font-size:13px}
   .cart-fab{font-size:19px;padding:4px 12px 2px 6px}.cart-fab img{width:42px;height:42px}
 }
 /* ---------------- BONUS ---------------- */
