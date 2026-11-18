@@ -551,12 +551,14 @@ function 명단반영() {
 function onChangeSync(e) { if (e && e.changeType === 'EDIT') return; try { 명단반영(); } catch (x) {} }
 function installTriggers_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var has = ScriptApp.getProjectTriggers().some(function(t){ return t.getHandlerFunction() === 'onChangeSync'; });
-  if (!has) ScriptApp.newTrigger('onChangeSync').forSpreadsheet(ss).onChange().create();
+  var ts = ScriptApp.getProjectTriggers();
+  if (!ts.some(function(t){ return t.getHandlerFunction() === 'onChangeSync'; })) ScriptApp.newTrigger('onChangeSync').forSpreadsheet(ss).onChange().create();
+  // 시트 주인 권한으로 실행돼서, 잠긴 탭이 있어도 다른 선생님이 명단을 고치면 반영돼요
+  if (!ts.some(function(t){ return t.getHandlerFunction() === 'onEditSync'; })) ScriptApp.newTrigger('onEditSync').forSpreadsheet(ss).onEdit().create();
 }
 
 /** 명단 탭에서 이름·포인트를 고치면 자동 반영 */
-function onEdit(e) {
+function onEditSync(e) {
   try {
     var sh = e && e.range && e.range.getSheet(); if (!sh) return;
     var isRoster = ROSTERS.some(function(R){ return R.tab === sh.getName(); });
