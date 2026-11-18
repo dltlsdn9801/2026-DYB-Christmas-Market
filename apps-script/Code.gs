@@ -578,6 +578,7 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('🎄 마켓 관리')
     .addItem('명단 → 학생 탭 반영하기 (남은 포인트 새로고침)', '명단반영')
     .addItem('재고 다시 계산하기', '재고반영')
+    .addItem('물품 구매 탭 만들기/정리하기', '물품구매시트')
     .addSeparator()
     .addItem('지금 탭: 이름순 정렬 (가나다)', '이름순정렬')
     .addItem('지금 탭: 선생님 → 이름순 정렬 (명단·편지)', '담임순정렬')
@@ -734,15 +735,117 @@ function 꾸미기() {
     ['🚫 금지어','여기에 단어를 추가하면 그 단어가 든 댓글·편지가 막혀요. (기본 비속어 필터는 이미 켜져 있어요)'],[''],
     ['⚠️ 주의','탭 이름과 1행 제목은 바꾸지 마세요. 물품 ID와 학생 이름도 행사 중에는 바꾸지 마세요.'],
     ['⚠️ 주의','주문·당첨기록 줄을 지우면 참가권이 되살아날 수 있어요. 연습 기록 정리할 때만 지우세요.'],
+    ['🛒 물품 구매','선생님이 산 물건·가격·수량을 적는 탭이에요 (사이트와 무관). 오른쪽 위 [전체 예산]만 적으면 사용한 금액·남은 예산이 자동 계산돼요.'],
     ['💡 팁','칸 위 제목에 마우스를 올리면 설명이 나와요. 행사 전에 [파일 → 사본 만들기]로 백업해 두세요.']
   ];
   lines.forEach(function(r,i){ g.getRange(i+1,1,1,r.length).setValues([r]); });
   g.getRange('A1').setFontSize(20).setFontWeight('bold').setFontColor('#b50005');
   g.getRange(3,1,lines.length-2,1).setFontWeight('bold').setFontSize(12);
   g.getRange(3,2,lines.length-2,1).setFontSize(12).setWrap(true);
-  g.getRange('A15:B16').setBackground('#ffe9e7'); g.getRange('A17:B17').setBackground('#fff6d6'); g.getRange('A5:B6').setBackground('#eef6ff');
+  g.getRange('A16:B17').setBackground('#ffe9e7'); g.getRange('A18:B18').setBackground('#fff6d6'); g.getRange('A5:B6').setBackground('#eef6ff');
   g.setColumnWidth(1,120); g.setColumnWidth(2,620);
   ss.setActiveSheet(g); ss.moveActiveSheet(1);
   SpreadsheetApp.flush();
   재고반영();
+  try { 물품구매시트(); } catch (x) {}
+}
+
+/* ===== [물품 구매] 탭: 선생님이 산 물건과 예산 관리 (사이트와는 연결되지 않아요) ===== */
+var BUY_TAB = '물품 구매';
+function 물품구매시트() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(BUY_TAB);
+  if (sh && sh.getRange('A3').getValue() !== '물품명' && sh.getLastRow() > 0) {
+    // 예전에 직접 적어 둔 내용이 있으면 백업 탭으로 복사해 두고 새로 만들어요
+    var bk = sh.copyTo(ss); bk.setName(BUY_TAB + '_백업_' + Utilities.formatDate(new Date(), 'Asia/Seoul', 'MMdd_HHmm'));
+    sh.clear(); sh.clearConditionalFormatRules(); sh.getDataRange().clearDataValidations();
+  }
+  if (!sh) sh = ss.insertSheet(BUY_TAB);
+  var ROWS = 120, first = 4, last = first + ROWS - 1;
+  if (sh.getMaxRows() < last + 2) sh.insertRowsAfter(sh.getMaxRows(), last + 2 - sh.getMaxRows());
+  sh.setTabColor('#ff9800'); sh.setHiddenGridlines(false);
+
+  // ---- 제목 ----
+  sh.getRange('A1').setValue('🛒 물품 구매 · 예산 관리').setFontSize(18).setFontWeight('bold').setFontColor('#b50005');
+  sh.getRange('A2').setValue('하얀 칸(물품명~총 가격)만 적으면 돼요. 총 재고·현 재고는 [물품] 탭에서 자동으로 가져와요 (물품명이 같아야 해요).').setFontColor('#777777').setFontSize(10);
+
+  // ---- 표 머리 ----
+  var H = ['물품명','카테고리','개별 가격','수량','총 가격','총 재고','현 재고'];
+  sh.getRange(3,1,1,H.length).setValues([H]).setFontWeight('bold').setFontColor('#ffffff').setHorizontalAlignment('center').setVerticalAlignment('middle');
+  sh.getRange(3,1,1,5).setBackground('#ff9800');
+  sh.getRange(3,6,1,2).setBackground('#9e9e9e');
+  sh.setRowHeight(3, 32); sh.setFrozenRows(3);
+  [170,90,90,70,110,80,80].forEach(function(w,i){ sh.setColumnWidth(i+1, w); });
+
+  // ---- 수식: 총 가격(개별 가격×수량, 직접 덮어써도 OK), 총 재고·현 재고(물품 탭에서) ----
+  var look = function(col){
+    return '=IF($A{r}="","",IFERROR(INDEX(\'물품\'!$A:$Z, MATCH($A{r}, INDEX(\'물품\'!$A:$Z,0,MATCH("이름",\'물품\'!$1:$1,0)),0), MATCH("' + col + '",\'물품\'!$1:$1,0)),"없음"))';
+  };
+  var eF = [], fF = [], gF = [];
+  for (var r = first; r <= last; r++) {
+    eF.push(['=IF(OR($C' + r + '="",$D' + r + '=""),"",$C' + r + '*$D' + r + ')']);
+    fF.push([look('초기재고').replace(/\{r\}/g, r)]);
+    gF.push([look('현재고').replace(/\{r\}/g, r)]);
+  }
+  var eR = sh.getRange(first,5,ROWS,1), fR = sh.getRange(first,6,ROWS,1), gR = sh.getRange(first,7,ROWS,1);
+  // 이미 직접 적은 총 가격은 지우지 않아요
+  var curE = eR.getValues();
+  eR.setFormulas(eF);
+  curE.forEach(function(v,i){ if (v[0] !== '' && typeof v[0] === 'number') sh.getRange(first+i,5).setValue(v[0]); });
+  fR.setFormulas(fF); gR.setFormulas(gF);
+
+  // ---- 서식 ----
+  sh.getRange(first,1,ROWS,7).setVerticalAlignment('middle');
+  sh.getRange(first,2,ROWS,6).setHorizontalAlignment('center');
+  sh.getRange(first,3,ROWS,1).setNumberFormat('#,##0"원"');
+  sh.getRange(first,4,ROWS,1).setNumberFormat('#,##0"개"');
+  sh.getRange(first,5,ROWS,1).setNumberFormat('#,##0"원"').setFontWeight('bold');
+  sh.getRange(first,6,ROWS,2).setNumberFormat('#,##0"개"').setBackground('#f3f3f3').setFontColor('#555555');
+  sh.getBandings().forEach(function(b){ b.remove(); });
+  sh.getRange(3,1,ROWS+1,5).applyRowBanding(SpreadsheetApp.BandingTheme.ORANGE, true, false).setHeaderRowColor('#ff9800').setFirstRowColor('#ffffff').setSecondRowColor('#fff6e5');
+
+  // 입력 도우미: 카테고리 목록, 물품명은 [물품] 탭 이름 목록에서 고를 수도 있어요
+  sh.getRange(first,2,ROWS,1).setDataValidation(SpreadsheetApp.newDataValidation()
+    .requireValueInList(['참가권','쿠폰','간식','문구','당첨 상품','기타'], true).setAllowInvalid(true).build());
+  var it = ss.getSheetByName(TAB_NAMES.items);
+  if (it) {
+    var ih = it.getRange(1,1,1,it.getLastColumn()).getValues()[0].map(function(x){ return String(x).trim(); });
+    var nc = ih.indexOf('이름') + 1;
+    if (nc > 0) sh.getRange(first,1,ROWS,1).setDataValidation(SpreadsheetApp.newDataValidation()
+      .requireValueInRange(it.getRange(2, nc, Math.max(it.getMaxRows()-1,1), 1), true).setAllowInvalid(true)
+      .setHelpText('[물품] 탭 이름과 똑같이 쓰면 재고가 자동으로 보여요. 다른 이름도 적을 수 있어요.').build());
+  }
+  var num = SpreadsheetApp.newDataValidation().requireNumberGreaterThanOrEqualTo(0).setAllowInvalid(false).setHelpText('숫자만 넣어 주세요').build();
+  sh.getRange(first,3,ROWS,2).setDataValidation(num);
+  sh.getRange(3,1).setNote('[물품] 탭의 "이름"과 똑같이 쓰면 총 재고·현 재고가 자동으로 채워져요');
+  sh.getRange(3,5).setNote('개별 가격 × 수량으로 자동 계산돼요. 실제 결제 금액이 다르면 그냥 덮어써서 적으세요.');
+  sh.getRange(3,6).setNote('자동: [물품] 탭의 초기재고');
+  sh.getRange(3,7).setNote('자동: [물품] 탭의 현재고 (팔린 만큼 줄어요)');
+
+  // ---- 오른쪽 위: 예산 요약 ----
+  sh.setColumnWidth(8, 30); sh.setColumnWidth(9, 120); sh.setColumnWidth(10, 140);
+  var box = sh.getRange('I2:J7');
+  box.breakApart();
+  sh.getRange('I2:J2').merge().setValue('💰 예산 요약').setFontWeight('bold').setFontSize(13).setHorizontalAlignment('center').setBackground('#b50005').setFontColor('#ffffff');
+  var labels = [['전체 예산'],['총 인원'],['사용한 금액'],['남은 예산'],['1인당 사용 금액']];
+  sh.getRange('I3:I7').setValues(labels).setFontWeight('bold').setBackground('#fff3e0').setHorizontalAlignment('center');
+  var budget = sh.getRange('J3');
+  if (budget.getValue() === '' || budget.getFormula()) budget.setValue(0);
+  budget.setBackground('#ffffff').setNote('여기에 전체 예산을 직접 적어 주세요');
+  var stu = ss.getSheetByName(TAB_NAMES.users);
+  sh.getRange('J4').setFormula('=IFERROR(COUNTIFS(INDEX(\'학생\'!$A:$Z,0,MATCH("이름",\'학생\'!$1:$1,0)),"<>",INDEX(\'학생\'!$A:$Z,0,MATCH("학년",\'학생\'!$1:$1,0)),"<>샘플")-1,0)')
+    .setNote('자동: [학생] 탭 학생 수 (샘플 학생 제외). 직접 숫자를 적어도 돼요.').setBackground('#f3f3f3');
+  sh.getRange('J5').setFormula('=SUM(E' + first + ':E' + last + ')').setBackground('#f3f3f3');
+  sh.getRange('J6').setFormula('=J3-J5').setBackground('#fffde7').setFontSize(13);
+  sh.getRange('J7').setFormula('=IF(J4>0,J5/J4,"")').setBackground('#f3f3f3');
+  sh.getRange('J3').setNumberFormat('#,##0"원"'); sh.getRange('J4').setNumberFormat('#,##0"명"');
+  sh.getRange('J5:J7').setNumberFormat('#,##0"원"');
+  sh.getRange('J3:J7').setFontWeight('bold').setHorizontalAlignment('right');
+  sh.getRange('I2:J7').setBorder(true,true,true,true,true,true,'#5c2b10',SpreadsheetApp.BorderStyle.SOLID_MEDIUM);
+  var rules = [
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$J$6<0').setBackground('#ffcdd2').setFontColor('#b50005').setRanges([sh.getRange('J6')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=AND($J$3>0,$J$6>=0,$J$6<=$J$3*0.1)').setBackground('#ffe0b2').setFontColor('#e65100').setRanges([sh.getRange('J6')]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$F' + first + '="없음"').setFontColor('#bbbbbb').setRanges([sh.getRange(first,6,ROWS,2)]).build()
+  ];
+  sh.setConditionalFormatRules(rules);
+  SpreadsheetApp.flush();
 }
