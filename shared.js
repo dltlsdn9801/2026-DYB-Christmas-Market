@@ -2,10 +2,10 @@
 var HEADERS = {
   items:  ['ID','카테고리','이름','가격','초기재고','현재고','당일판매수량','당일재고','1인최대','이미지','판매','설명'],
   users:  ['이름','비밀번호','포인트','학년','담임'],
-  orders: ['시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
+  orders: ['지급완료','시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
   box:    ['등급','상품명','이미지','가중치','남은수량','처음수량'],
   roul:   ['칸','상품명','이미지','남은수량'],
-  wins:   ['시간','이름','게임','등급','상품명','이미지','학생코드'],
+  wins:   ['지급완료','시간','이름','게임','등급','상품명','이미지','학생코드'],
   letters:['선생님','학생 이름','내용','학년','시간','편지에 쓴 이름','명단 담임','지급포인트','학생코드'],
   comments:['시간','학년','이름','내용','상태','지급포인트','학생코드'],
   banned: ['금지어']
@@ -103,7 +103,10 @@ function E_state(db, u){
       limit:E_limit(i), img:E_str(i['이미지']), desc:E_str(i['설명']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
     roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
-    wins: db.wins.slice(-60).reverse().map(function(w){ return {t:E_str(w['시간']), who:E_who(db,w), nm:E_mask(w['이름']), g:E_gradeOf(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
+    wins: (function(){ var m = function(w){ return {t:E_str(w['시간']), who:E_who(db,w), nm:E_mask(w['이름']), g:E_gradeOf(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; };
+      var top = db.wins.filter(function(w){ return E_str(w['등급']) === '1등'; }), rest = db.wins.slice(-60).filter(function(w){ return E_str(w['등급']) !== '1등'; });
+      return top.reverse().map(m).concat(rest.reverse().map(m)); })(),
+    popular: E_popular(db),
     comments: db.comments.filter(function(c){ var st = E_str(c['상태']); return st !== '숨김' && st !== '자동삭제' && !E_bad(E_str(c['내용']), E_bannedList(db)); })
       .slice(-60).reverse().map(function(c){ return {t:E_str(c['시간']), who:E_who(db,c), text:E_str(c['내용']), mine:E_isMe(c,u)}; }),
     letter: { sent: db.letters.filter(function(l){ return E_isMe(l,u); }).length, max: LETTER_MAX, points: LETTER_POINTS },
@@ -239,4 +242,13 @@ function E_stock(db, i){
   if (q === '') return { init: init, cur: cur, day: cur, base: init };
   var day = Math.max(0, Math.min(E_num(q) - E_sold(db, id, db.today), cur));
   return { init: init, cur: cur, day: day, base: E_num(q) };
+}
+
+/* ---------- 인기 상품 TOP 3 (참가권 제외, 팔린 수량 순) ---------- */
+function E_popular(db){
+  var cnt = {};
+  db.orders.forEach(function(o){ var id = E_str(o['상품ID']); if (!id || id.indexOf('ticket_') === 0) return; cnt[id] = (cnt[id] || 0) + E_num(o['수량']); });
+  return Object.keys(cnt).map(function(id){ var it = db.items.filter(function(i){ return E_str(i['ID']) === id; })[0];
+      return it && E_onSale(it) ? {id:id, name:E_str(it['이름']), img:E_str(it['이미지']), sold:cnt[id]} : null; })
+    .filter(Boolean).sort(function(a,b){ return b.sold - a.sold; }).slice(0,3);
 }

@@ -2,10 +2,10 @@
 var HEADERS = {
   items:  ['ID','카테고리','이름','가격','초기재고','현재고','당일판매수량','당일재고','1인최대','이미지','판매','설명'],
   users:  ['이름','비밀번호','포인트','학년','담임'],
-  orders: ['시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
+  orders: ['지급완료','시간','주문번호','이름','상품ID','상품명','수량','단가','금액','주문후포인트','학생코드'],
   box:    ['등급','상품명','이미지','가중치','남은수량','처음수량'],
   roul:   ['칸','상품명','이미지','남은수량'],
-  wins:   ['시간','이름','게임','등급','상품명','이미지','학생코드'],
+  wins:   ['지급완료','시간','이름','게임','등급','상품명','이미지','학생코드'],
   letters:['선생님','학생 이름','내용','학년','시간','편지에 쓴 이름','명단 담임','지급포인트','학생코드'],
   comments:['시간','학년','이름','내용','상태','지급포인트','학생코드'],
   banned: ['금지어']
@@ -103,7 +103,10 @@ function E_state(db, u){
       limit:E_limit(i), img:E_str(i['이미지']), desc:E_str(i['설명']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
     roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
-    wins: db.wins.slice(-60).reverse().map(function(w){ return {t:E_str(w['시간']), who:E_who(db,w), nm:E_mask(w['이름']), g:E_gradeOf(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; }),
+    wins: (function(){ var m = function(w){ return {t:E_str(w['시간']), who:E_who(db,w), nm:E_mask(w['이름']), g:E_gradeOf(db,w), game:E_str(w['게임']), grade:E_str(w['등급']), prize:E_str(w['상품명']), img:E_str(w['이미지'])}; };
+      var top = db.wins.filter(function(w){ return E_str(w['등급']) === '1등'; }), rest = db.wins.slice(-60).filter(function(w){ return E_str(w['등급']) !== '1등'; });
+      return top.reverse().map(m).concat(rest.reverse().map(m)); })(),
+    popular: E_popular(db),
     comments: db.comments.filter(function(c){ var st = E_str(c['상태']); return st !== '숨김' && st !== '자동삭제' && !E_bad(E_str(c['내용']), E_bannedList(db)); })
       .slice(-60).reverse().map(function(c){ return {t:E_str(c['시간']), who:E_who(db,c), text:E_str(c['내용']), mine:E_isMe(c,u)}; }),
     letter: { sent: db.letters.filter(function(l){ return E_isMe(l,u); }).length, max: LETTER_MAX, points: LETTER_POINTS },
@@ -241,6 +244,15 @@ function E_stock(db, i){
   return { init: init, cur: cur, day: day, base: E_num(q) };
 }
 
+/* ---------- 인기 상품 TOP 3 (참가권 제외, 팔린 수량 순) ---------- */
+function E_popular(db){
+  var cnt = {};
+  db.orders.forEach(function(o){ var id = E_str(o['상품ID']); if (!id || id.indexOf('ticket_') === 0) return; cnt[id] = (cnt[id] || 0) + E_num(o['수량']); });
+  return Object.keys(cnt).map(function(id){ var it = db.items.filter(function(i){ return E_str(i['ID']) === id; })[0];
+      return it && E_onSale(it) ? {id:id, name:E_str(it['이름']), img:E_str(it['이미지']), sold:cnt[id]} : null; })
+    .filter(Boolean).sort(function(a,b){ return b.sold - a.sold; }).slice(0,3);
+}
+
 /* ===== Google Apps Script 부분 (시트와 연결) ===== */
 
 /** 처음 한 번만 실행: 탭과 샘플 데이터를 만들어요. 이미 내용이 있는 탭은 건드리지 않아요. */
@@ -250,7 +262,7 @@ function setup() {
   var colors = { items:'#e5403a', users:'#1f7a4d', orders:'#b50005', box:'#ffc83d', roul:'#2fa36b', wins:'#7cc8ff', letters:'#ff8fab', comments:'#9575cd', banned:'#616161' };
   Object.keys(TAB_NAMES).forEach(function(k){
     var sh = ss.getSheetByName(TAB_NAMES[k]) || ss.insertSheet(TAB_NAMES[k]);
-    if (sh.getLastRow() > 0) { if (k === 'items') migrateStock_(sh); if (k === 'letters' || k === 'items') reorderCols_(sh, HEADERS[k]); ensureCols_(sh, HEADERS[k]); return; }
+    if (sh.getLastRow() > 0) { if (k === 'items') migrateStock_(sh); if (k === 'letters' || k === 'items' || k === 'orders' || k === 'wins') reorderCols_(sh, HEADERS[k]); ensureCols_(sh, HEADERS[k]); return; }
     var h = HEADERS[k];
     sh.getRange(1,1,1,h.length).setValues([h]).setFontWeight('bold').setBackground(colors[k]).setFontColor(k==='box'?'#3a2420':'#ffffff');
     sh.setFrozenRows(1);
@@ -276,7 +288,7 @@ function loadDB_() {
     db._sh[k] = sh; db._hdr[k] = h;
     db[k] = vals.slice(1).map(function(r, i){
       var o = { _r: i + 2 }; h.forEach(function(name, j){ var v = r[j]; o[name] = (v instanceof Date) ? Utilities.formatDate(v, 'Asia/Seoul', 'MM/dd HH:mm:ss') : v; }); return o;
-    }).filter(function(o){ return h.some(function(name){ return o[name] !== '' && o[name] !== null; }); });
+    }).filter(function(o){ return h.some(function(name){ return name !== '지급완료' && o[name] !== '' && o[name] !== null; }); });
   });
   // 랜덤박스 '처음수량'이 비어 있으면 지금 남은수량으로 채워요 (재고 퍼센트 계산용)
   db.box.forEach(function(b){ if (E_str(b['처음수량']) === '' && E_str(b['상품명'])) { b['처음수량'] = E_num(b['남은수량']); var c = db._hdr.box.indexOf('처음수량') + 1; if (c > 0) db._sh.box.getRange(b._r, c).setValue(b['처음수량']); } });
@@ -297,6 +309,8 @@ function saveDB_(db) {
     if (!rows.length) return;
     var h = db._hdr[k], sh = db._sh[k], start = sh.getLastRow() + 1, tc = h.indexOf('시간') + 1;
     if (tc > 0) sh.getRange(start, tc, rows.length, 1).setNumberFormat('@');
+    var pc = h.indexOf('지급완료') + 1;
+    if (pc > 0) { var cb = sh.getRange(start, pc, rows.length, 1); cb.insertCheckboxes(); rows.forEach(function(o){ o['지급완료'] = false; }); }
     sh.getRange(start, 1, rows.length, h.length).setValues(rows.map(function(o){ return h.map(function(name){ return o[name] === undefined ? '' : o[name]; }); }));
   });
   SpreadsheetApp.flush();
@@ -678,6 +692,15 @@ function 꾸미기() {
       var gc = col('등급'); if (gc) { var Lg = String.fromCharCode(64+gc);
         rules.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$'+Lg+'2="1등"').setBackground('#ffe066').setBold(true).setRanges([sh.getRange(2,1,rows,n)]).build()); }
     }
+    var payC = col('지급완료');
+    if (payC && (k === 'orders' || k === 'wins')) {
+      if (sh.getLastRow() >= 2) sh.getRange(2, payC, sh.getLastRow() - 1, 1).insertCheckboxes();
+      sh.getRange(1, payC).setNote('선생님이 물건을 주면 체크하세요. 체크하면 그 줄이 회색이 돼요.');
+      sh.setColumnWidth(payC, 80); sh.setFrozenColumns(1);
+      var Lp = String.fromCharCode(64 + payC);
+      rules.unshift(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied('=$' + Lp + '2=TRUE').setBackground('#cfcfcf').setFontColor('#8a8a8a').setStrikethrough(true).setRanges([sh.getRange(2,1,rows,n)]).build());
+      if (sh.getFilter()) sh.getFilter().remove(); sh.getRange(1,1,sh.getMaxRows(),n).createFilter();
+    }
     if (k !== 'comments') sh.setConditionalFormatRules(rules);
 
     // warn before editing the header row
@@ -695,10 +718,10 @@ function 꾸미기() {
     ['📝 학년 명단','4·5·6학년 명단 탭에 담임선생님·이름·포인트만 넣으면 학생 탭에 자동으로 들어가고 초대장 번호(DYB+숫자 5자리)가 만들어져요. 이름을 지우거나 줄을 삭제하면 번호와 학생 정보도 함께 지워져요.'],
     ['','포인트 숫자를 나중에 올리면 그만큼 추가 지급돼요. 정렬은 제목줄의 ▼(필터) 또는 위쪽 [🎄 마켓 관리] 메뉴에서!'],
     ['🧒 학생','명단에서 자동으로 채워져요. 샘플 학생(비밀번호 1234)은 연습용이니 행사 전에 지워도 돼요.'],
-    ['🧾 주문','사이트에서 주문하면 자동으로 쌓여요. 학생이 보여주는 주문번호로 확인하세요.'],
+    ['🧾 주문','사이트에서 주문하면 자동으로 쌓여요. 학생이 보여주는 주문번호로 찾고(Ctrl+F), 물건을 준 뒤 맨 앞 [지급완료] 칸을 체크하면 그 줄이 회색이 돼요.'],
     ['🎁 랜덤박스','가중치가 클수록 잘 나와요. 남은수량이 0이면 안 나와요. 1등은 노란 줄이에요.'],
     ['🎡 룰렛','칸을 추가·삭제하면 룰렛 칸 수가 자동으로 바뀌어요.'],
-    ['🏆 당첨기록','룰렛·랜덤박스 결과가 자동으로 쌓여요.'],
+    ['🏆 당첨기록','룰렛·랜덤박스 결과가 자동으로 쌓여요. 상품을 준 뒤 맨 앞 [지급완료] 칸을 체크하세요.'],
     ['💌 편지 / 💬 댓글','편지는 [선생님 / 학생 이름 / 내용] 순서예요. 선생님 칸 ▼ 필터로 내 학생 편지만 볼 수 있어요. 댓글 상태 칸에 "숨김"을 쓰면 사이트에서 사라져요.'],
     ['🚫 금지어','여기에 단어를 추가하면 그 단어가 든 댓글·편지가 막혀요. (기본 비속어 필터는 이미 켜져 있어요)'],[''],
     ['⚠️ 주의','탭 이름과 1행 제목은 바꾸지 마세요. 물품 ID와 학생 이름도 행사 중에는 바꾸지 마세요.'],

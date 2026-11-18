@@ -15,7 +15,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{min-height:100%}
 body{font-family:'Jua',sans-serif;color:var(--ink);overflow-x:hidden;font-size:20px;
-  background:var(--red) radial-gradient(rgba(255,255,255,.13) 2.5px,transparent 3.5px) 0 0/30px 30px;}
+  background:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22 viewBox=%220 0 300 300%22%3E%3Cg opacity=%22.2%22 fill=%22none%22 stroke-linecap=%22round%22%3E%3Cg transform=%22translate%2840 20%29 rotate%28-18%29%22%3E%3Cpath d=%22M18 90 V26 a14 14 0 0 0 -28 0%22 stroke=%22%23fff%22 stroke-width=%2213%22/%3E%3Cpath d=%22M18 90 V26 a14 14 0 0 0 -28 0%22 stroke=%22%23b50005%22 stroke-width=%2213%22 stroke-dasharray=%229 9%22/%3E%3C/g%3E%3Cg transform=%22translate%28210 40%29%22 stroke=%22%23fff%22 stroke-width=%224%22%3E%3Cpath d=%22M0 -26V26M-22 -13L22 13M-22 13L22 -13%22/%3E%3Cpath d=%22M0 -16l-6 -6M0 -16l6 -6M0 16l-6 6M0 16l6 6%22/%3E%3C/g%3E%3Cg transform=%22translate%28150 150%29%22%3E%3Crect x=%22-6%22 y=%22-30%22 width=%2212%22 height=%228%22 rx=%222%22 fill=%22%23fff%22/%3E%3Ccircle r=%2220%22 fill=%22%23fff%22/%3E%3Cpath d=%22M-18 -2 q18 10 36 0%22 stroke=%22%23b50005%22 stroke-width=%224%22/%3E%3C/g%3E%3Cg transform=%22translate%28250 200%29 rotate%2814%29%22%3E%3Cpath d=%22M18 90 V26 a14 14 0 0 0 -28 0%22 stroke=%22%23fff%22 stroke-width=%2213%22/%3E%3Cpath d=%22M18 90 V26 a14 14 0 0 0 -28 0%22 stroke=%22%23b50005%22 stroke-width=%2213%22 stroke-dasharray=%229 9%22/%3E%3C/g%3E%3Cg transform=%22translate%2860 230%29%22%3E%3Crect x=%22-22%22 y=%22-12%22 width=%2244%22 height=%2232%22 rx=%224%22 fill=%22%23fff%22/%3E%3Crect x=%22-26%22 y=%22-20%22 width=%2252%22 height=%2210%22 rx=%223%22 fill=%22%23fff%22/%3E%3Cpath d=%22M0 -20V20%22 stroke=%22%23b50005%22 stroke-width=%226%22/%3E%3Cpath d=%22M0 -20 C-14 -36 -22 -26 -10 -20 M0 -20 C14 -36 22 -26 10 -20%22 stroke=%22%23fff%22 stroke-width=%224%22/%3E%3C/g%3E%3Cg transform=%22translate%28150 50%29%22 fill=%22%23fff%22%3E%3Cpath d=%22M0 -14 l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z%22/%3E%3C/g%3E%3Cg transform=%22translate%28110 270%29%22 stroke=%22%23fff%22 stroke-width=%223%22%3E%3Cpath d=%22M0 -14V14M-12 -7L12 7M-12 7L12 -7%22/%3E%3C/g%3E%3Cg transform=%22translate%28270 120%29%22 fill=%22%23fff%22%3E%3Cpath d=%22M0 -10 l3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") 0 0/300px 300px,var(--red) radial-gradient(rgba(255,255,255,.1) 2.5px,transparent 3.5px) 0 0/30px 30px;background-attachment:fixed,scroll}
 button{font-family:'Jua',sans-serif;cursor:pointer;border:0;color:inherit}
 body{caret-color:transparent}
 input,textarea{caret-color:auto}
@@ -176,6 +176,21 @@ section.view.on{display:block}
 
 /* category headers */
 .cat{margin:40px 0 0}
+.popular{margin:30px 0 6px;background:linear-gradient(135deg,#fff6cf,#fff 45%,#ffe9a8);border:3px solid var(--line);border-radius:30px;box-shadow:0 6px 0 var(--line);padding:16px 18px 20px;position:relative;overflow:hidden}
+.popular::before{content:"";position:absolute;inset:-60%;background:repeating-conic-gradient(rgba(255,200,61,.18) 0 10deg,transparent 10deg 20deg);animation:spin 30s linear infinite;pointer-events:none}
+.pop-head{position:relative;text-align:center;font-size:clamp(26px,4.4vw,38px);color:var(--deep)}
+.pop-head b{font-weight:400;color:var(--red);-webkit-text-stroke:1.5px var(--line);paint-order:stroke fill}
+.pop-head .fire{display:inline-block;animation:wiggle 1s infinite}
+.pop-row{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:14px;align-items:end}
+.pop{background:#fff;border:3px solid var(--line);border-radius:22px;box-shadow:0 5px 0 var(--line);text-align:center;padding:12px 10px 12px;position:relative}
+.pop.r1{order:2;background:linear-gradient(#fff7c8,#fff);transform:translateY(-10px);box-shadow:0 5px 0 var(--line),0 0 26px 6px rgba(255,200,61,.7)}
+.pop.r2{order:1}.pop.r3{order:3}
+.pop .md{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:40px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.2))}
+.pop img{width:72%;aspect-ratio:1;object-fit:contain;margin:14px auto 6px;border-radius:12px}
+.pop .pn{font-size:clamp(17px,2.4vw,23px);word-break:keep-all;line-height:1.2}
+.pop .ps{display:inline-block;margin-top:6px;background:var(--red);color:#fff;border:2px solid var(--line);border-radius:999px;padding:1px 12px 0;font-size:16px}
+.pop-empty{grid-column:1/-1;text-align:center;font-size:21px;padding:16px;color:#8a6a5a}
+@media (max-width:600px){.pop-row{gap:8px}.pop .md{font-size:30px}.pop .ps{font-size:13px;padding:1px 6px 0}}
 .cat-head{display:flex;align-items:flex-end;gap:8px;margin-bottom:16px;flex-wrap:wrap}
 .cat-head .who{width:clamp(80px,13vw,110px);filter:drop-shadow(0 4px 0 rgba(0,0,0,.2));animation:bob 2.6s ease-in-out infinite}
 .ribbon-title{position:relative;background:var(--cream);border:3px solid var(--line);border-radius:18px;padding:6px 18px 4px;box-shadow:0 5px 0 var(--line)}
@@ -218,6 +233,11 @@ section.view.on{display:block}
 .add{margin-top:8px}
 
 /* cart */
+.music-btn{position:fixed;left:16px;bottom:16px;z-index:60;display:flex;align-items:center;gap:6px;background:#fff;border:3px solid var(--line);border-radius:999px;box-shadow:0 5px 0 var(--line);padding:6px 16px 4px 10px;font-size:18px}
+.music-btn .ico{font-size:24px;display:inline-block;animation:wiggle 1.2s infinite}
+.music-btn.off{background:#e9e2dc;color:#8a7a6a}.music-btn.off .ico{animation:none;opacity:.6}
+.music-btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--line)}
+@media (max-width:640px){.music-btn{padding:6px 10px 4px}.music-btn .lbl{display:none}}
 .cart-fab{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;align-items:center;gap:6px;background:var(--gold);border:3px solid var(--line);border-radius:999px;box-shadow:0 5px 0 var(--line);padding:6px 18px 4px 8px;font-size:23px}
 .cart-fab img{width:54px;height:54px;object-fit:contain;margin-top:-22px}
 .cart-fab .n{background:var(--red);color:#fff;border:2px solid var(--line);border-radius:999px;min-width:28px;padding:0 6px;font-size:19px}
@@ -228,6 +248,7 @@ section.view.on{display:block}
 .drawer .sheet{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(560px,100%);max-height:86vh;background:var(--cream);border:3px solid var(--line);border-bottom:0;border-radius:28px 28px 0 0;padding:18px 16px 18px;display:flex;flex-direction:column;animation:fadeup .3s}
 .sheet h3{font-size:31px;color:var(--deep);display:flex;align-items:center;gap:8px}
 .sheet h3 img{width:56px}
+.clearcart{margin-left:auto;margin-right:84px;font-size:16px;background:#ffe1e1}
 .sheet .x{position:absolute;right:14px;top:12px}
 .cart-list{list-style:none;overflow:auto;margin:10px 0;flex:1}
 .cart-list li{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:2px dashed #ead8cc}
@@ -292,6 +313,17 @@ section.view.on{display:block}
 .wlist{list-style:none;margin-top:8px;max-height:380px;overflow:auto}
 .wlist li{display:flex;align-items:center;gap:10px;padding:7px 6px;border-bottom:2px dashed #f1e2d6;font-size:20px}
 .wlist li.first{background:linear-gradient(90deg,#fff3b0,#fff);border-radius:12px}
+.wlist li.jackpot-row{position:relative;overflow:hidden;margin:8px 4px 12px;padding:14px 12px 12px 46px;border:3px solid var(--line)!important;border-radius:18px;font-size:22px;
+  background:linear-gradient(110deg,#ffd84a,#fff3a6 30%,#ffc83d 50%,#fff3a6 70%,#ffd84a);background-size:200% 100%;animation:goldflow 3s linear infinite;
+  box-shadow:0 5px 0 var(--line),0 0 24px 6px rgba(255,200,61,.85)}
+.wlist li.jackpot-row::after{content:"";position:absolute;top:0;bottom:0;width:30%;left:-40%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);animation:shine 1.8s infinite}
+.wlist li.jackpot-row .gr{background:var(--red)!important;color:#fff;font-size:17px;animation:pulse 1s infinite}
+.wlist li.jackpot-row .wn{font-size:24px}
+.wlist li.jackpot-row img{width:54px;height:54px}
+.wlist li.jackpot-row .crown{position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:30px;animation:wiggle 1s infinite}
+.wlist li.jackpot-row .spk{position:absolute;font-size:16px;animation:twinkle 1.4s infinite}
+.wlist li.jackpot-row .s1{right:28%;top:2px}.wlist li.jackpot-row .s2{right:12%;bottom:2px;animation-delay:.5s}.wlist li.jackpot-row .s3{left:40%;bottom:0;animation-delay:.9s}
+@keyframes goldflow{to{background-position:-200% 0}}
 .wlist .gr{flex:none;border:2px solid var(--line);border-radius:999px;font-size:14px;padding:2px 8px 0;background:var(--cream)}
 .wlist li.first .gr{background:var(--gold)}
 .wlist li img{width:42px;height:42px;object-fit:contain;flex:none;border-radius:8px}
@@ -494,7 +526,6 @@ footer{position:relative;z-index:2;margin-top:70px}
 
 <!-- ============ APP ============ -->
 <div id="app">
-  <div class="floaters" id="floaters"></div>
   <header class="top">
     <div class="lights hlights" id="lights2"></div>
     <div class="top-in">
@@ -568,6 +599,7 @@ footer{position:relative;z-index:2;margin-top:70px}
           <img class="mascot" src="img/xmas/turtle_happy.webp" alt="">
         </div>
       </div>
+      <div class="popular" id="popular"></div>
       <div id="shopCats"></div>
     </section>
 
@@ -664,6 +696,7 @@ footer{position:relative;z-index:2;margin-top:70px}
     </div>
   </footer>
 
+  <button class="music-btn" id="musicBtn" aria-label="캐럴 끄기/켜기"><span class="ico">🎵</span><span class="lbl">캐럴 끄기</span></button>
   <button class="cart-fab" id="cartFab"><img src="img/xmas/hamster.webp" alt="">장바구니 <span class="n" id="cartN">0</span></button>
 </div>
 
@@ -672,7 +705,7 @@ footer{position:relative;z-index:2;margin-top:70px}
   <div class="dim" id="drawerDim"></div>
   <div class="sheet">
     <button class="btn small x" id="drawerX">닫기</button>
-    <h3><img src="img/xmas/hamster.webp" alt="">내 장바구니</h3>
+    <h3><img src="img/xmas/hamster.webp" alt="">내 장바구니 <button class="btn small clearcart" id="clearCart">🗑️ 전체 비우기</button></h3>
     <ul class="cart-list" id="cartList"></ul>
     <div class="sum">
       <div><span>합계</span><span class="big" id="cTotal">0</span></div>
@@ -710,6 +743,9 @@ function mockInit(){
   const obj=(h,r)=>{const o={};h.forEach((k,i)=>o[k]=r[i]);return o};
   mockDB={today:nowStr().slice(0,5),items:E_seedItems().map(r=>obj(HEADERS.items,r)),users:SEED.users.map(r=>obj(HEADERS.users,r)),
     box:SEED.box.map(r=>obj(HEADERS.box,r)),roul:SEED.roul.map(r=>obj(HEADERS.roul,r)),orders:[],wins:[],letters:[],comments:[],banned:[]};
+  [['potato',6],['ring',4],['damla',9],['pencil',3]].forEach(([id,q],k)=>mockDB.orders.push({'시간':'12/17 09:5'+k+':00','주문번호':'D1'+k,'이름':'샘플','상품ID':id,'상품명':id,'수량':q,'단가':0,'금액':0,'주문후포인트':0}));
+  mockDB.wins.push({'시간':'12/17 09:40:00','이름':'정도윤','게임':'랜덤박스','등급':'1등','상품명':'배달의민족 3만원권','이미지':'baemin','학생코드':''});
+  mockDB.box[0]['남은수량']=0;
   mockDB.users.forEach((u,i)=>{u['학년']=['4학년','5학년','6학년'][i%3];u['담임']=['박','최','이'][i%3]+'선생'});
   [['이서연','떡볶이가 진짜 맛있었어요!! 또 해 주세요 🌶️'],['박지호','선생님들 항상 감사합니다 ❤️'],['최하은','룰렛 돌리는 거 너무 재밌어요ㅎㅎ']].forEach(([n,t],k)=>
     mockDB.comments.push({'시간':`12/17 10:1${k}:00`,'학년':'','이름':n,'내용':t,'상태':'','학생코드':''}));
@@ -763,7 +799,7 @@ function applyState(st){
   $('tBox').textContent=st.user.tickets.box; $('tRoul').textContent=st.user.tickets.roul;
   // drop cart lines that no longer exist
   Object.keys(cart).forEach(id=>{ if(!st.items.find(i=>i.id===id)) delete cart[id]; });
-  renderShop(); renderCart(); renderWinners(); renderBonus(); if(!spinning) drawWheel(0);
+  renderShop(); renderPopular(); renderCart(); renderWinners(); renderBonus(); if(!spinning) drawWheel(0);
 }
 
 /* ================= SHOP ================= */
@@ -818,6 +854,7 @@ function renderCart(){
   $('orderBtn').disabled=!ids.length||after<0;
   $('cartMsg').textContent=after<0?'포인트가 부족해요! 장바구니를 줄여 주세요.':'';
 }
+$('clearCart').onclick=()=>{ if(!Object.keys(cart).length) return; cart={}; renderShop(); renderCart(); $('cartMsg').textContent='장바구니를 비웠어요 🧹'; };
 $('cartFab').onclick=()=>{renderCart();$('drawer').classList.add('on')};
 $('drawerX').onclick=$('drawerDim').onclick=()=>$('drawer').classList.remove('on');
 $('orderBtn').onclick=async()=>{
@@ -840,6 +877,12 @@ $('myOrdersBtn').onclick=()=>{
     <button class="btn red ok" data-close>닫기</button>`);
 };
 
+function renderPopular(){
+  const P=S.popular||[], medal=['🥇','🥈','🥉'];
+  $('popular').innerHTML=`<div class="pop-head"><span class="fire">🔥</span> 지금 인기 상품 <b>TOP 3</b> <span class="fire">🔥</span></div>
+    <div class="pop-row">${P.length?P.map((p,i)=>`<div class="pop r${i+1}"><span class="md">${medal[i]}</span><img src="${imgSrc(p.img)}" alt="" onerror="${IMG_FALLBACK}"><div class="pn">${esc(p.name)}</div><div class="ps">${p.sold}개 팔렸어요!</div></div>`).join('')
+      :'<div class="pop-empty">아직 팔린 물건이 없어요. 첫 손님이 되어 볼까요? 🛍️</div>'}</div>`;
+}
 /* ================= MODAL ================= */
 function showModal(html,rays=false,jackpot=false,extra=''){
   $('mbox').className='mbox'+(jackpot?' jackpot':'')+(extra?' '+extra:''); $('mbox').innerHTML=html;
@@ -863,7 +906,8 @@ window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
 /* ================= WINNERS ================= */
 function renderWinners(){
   const li=w=>{const nm=w.nm||(w.who?w.who.replace(/\s*\(.*\)$/,''):E_mask(w.name||'')), g=w.g||((w.who||'').match(/\((.*)\)/)||[])[1]||'';
-    return `<li class="${w.grade==='1등'?'first':''}">${w.grade?`<span class="gr">${esc(w.grade)}</span>`:''}${g?`<span class="wg">(${esc(g)})</span>`:''}<b class="wn">${esc(nm)}</b><img src="${imgSrc(w.img)}" alt="" onerror="${IMG_FALLBACK}"><span class="arrow">→</span><span>${esc(w.prize)}</span><span class="t">${esc(w.t.slice(0,11))}</span></li>`};
+    const jk=w.grade==='1등';
+    return `<li class="${jk?'first jackpot-row':''}">${jk?'<span class="crown">👑</span><span class="spk s1">✨</span><span class="spk s2">⭐</span><span class="spk s3">✨</span>':''}${w.grade?`<span class="gr">${esc(w.grade)}</span>`:''}${g?`<span class="wg">(${esc(g)})</span>`:''}<b class="wn">${esc(nm)}</b><img src="${imgSrc(w.img)}" alt="" onerror="${IMG_FALLBACK}"><span class="arrow">→</span><span>${esc(w.prize)}</span><span class="t">${esc(w.t.slice(0,11))}</span></li>`};
   const bx=S.wins.filter(w=>w.game==='랜덤박스'), rl=S.wins.filter(w=>w.game==='룰렛');
   $('wlBox').innerHTML=bx.length?bx.map(li).join(''):'<li class="empty">아직 당첨자가 없어요. 첫 주인공이 되어 봐!</li>';
   $('wlRoul').innerHTML=rl.length?rl.map(li).join(''):'<li class="empty">아직 당첨 소식이 없어요!</li>';
@@ -1036,17 +1080,13 @@ function sweepBad(text){
   {const n2=9;let q=`<svg viewBox="0 0 ${n2*60} 30" preserveAspectRatio="none"><path d="M0 4 ${Array.from({length:n2},(_,i)=>`Q${i*60+30} 20 ${i*60+60} 4`).join(' ')}" fill="none" stroke="#1d3d1d" stroke-width="3"/>`;for(let i=0;i<n2;i++)q+=`<g class="bulb"><ellipse cx="${i*60+30}" cy="20" rx="6" ry="8" fill="${cols[i%5]}" stroke="#2b1a14" stroke-width="1.5"/></g>`;$('lbulbs').innerHTML=q+'</svg>';}
   for(let i=0;i<22;i++){const s=document.createElement('span');s.className='star';s.textContent='✦';
     s.style.cssText=`left:${Math.random()*100}%;top:${8+Math.random()*50}%;font-size:${10+Math.random()*16}px;animation-delay:${Math.random()*2}s`;$('stars').appendChild(s)}
-  // floating ornaments in app background
-  const fl=$('floaters'),kinds=['orn','flake','candy','orn','flake'],oc=['#ffc83d','#2fa36b','#9ad9ff','#ffb3c7'];
-  for(let i=0;i<10;i++){const k=kinds[i%kinds.length],s=document.createElement('span'),sz=k==='candy'?28:k==='flake'?30:36;
-    s.innerHTML=`<svg width="${sz}" height="${k==='candy'?sz*2.4:sz}" style="color:${oc[i%4]}"><use href="#${k}"/></svg>`;
-    s.style.cssText=`left:${(i*97)%100}%;top:${(i*53)%90+5}%;animation-delay:${-i*.7}s;animation-duration:${5+i%4}s`;fl.appendChild(s)}
   if(PREVIEW) $('hint').textContent='미리보기용: 이름 "김민준" (또는 이서연, 박지호…) / 초대장 번호 1234';
   $('pvBadge').hidden=!PREVIEW;
   const saved=ss('dyb-me'); if(saved){try{const o=JSON.parse(saved);$('inName').value=o.name||'';$('inPw').value=o.pw||''}catch(e){}}
 })();
 $('sign').addEventListener('submit',async e=>{
   e.preventDefault();
+  if(musicPref()!=='off'){ Carol.start(); } paintMusic();
   me={name:$('inName').value.trim(),pw:$('inPw').value.trim()};
   if(!me.name||!me.pw){$('loginErr').textContent='이름과 초대장 번호를 모두 넣어 줘!';$('signBoard').classList.remove('shake');void $('signBoard').offsetWidth;$('signBoard').classList.add('shake');return}
   $('loginErr').textContent='확인 중...';
@@ -1066,6 +1106,38 @@ let pollT=null;
 async function refresh(){ if(spinning||opening||!me.name) return; const r=await api('state'); if(r.ok) applyState(r.state); }
 function startPolling(){ clearInterval(pollT); pollT=setInterval(()=>{ if(!document.hidden) refresh(); }, PREVIEW?60000:20000); }
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&S) refresh(); });
+
+/* ================= CAROL (music box, public-domain melodies) ================= */
+const Carol=(function(){
+  const N=n=>{const m={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[n[0]]+(n[1]==='#'?1:0),o=+n.slice(-1);return 440*Math.pow(2,(m+12*(o+1)-69)/12)};
+  // [note, beats]  ('-' = rest)
+  const SONGS=[
+   {bpm:120,unit:.5,notes:'G4 3,A4 1,G4 2,E4 6,G4 3,A4 1,G4 2,E4 6,D5 4,D5 2,B4 6,C5 4,C5 2,G4 6,A4 4,A4 2,C5 3,B4 1,A4 2,G4 3,A4 1,G4 2,E4 6,A4 4,A4 2,C5 3,B4 1,A4 2,G4 3,A4 1,G4 2,E4 6,D5 4,D5 2,F5 3,D5 1,B4 2,C5 6,E5 6,C5 3,G4 1,E4 2,G4 3,F4 1,D4 2,C4 12,- 6'},
+   {bpm:112,unit:1,notes:'E4 1,E4 1,E4 2,E4 1,E4 1,E4 2,E4 1,G4 1,C4 1.5,D4 .5,E4 4,F4 1,F4 1,F4 1.5,F4 .5,F4 1,E4 1,E4 1,E4 .5,E4 .5,E4 1,D4 1,D4 1,E4 1,D4 2,G4 2,E4 1,E4 1,E4 2,E4 1,E4 1,E4 2,E4 1,G4 1,C4 1.5,D4 .5,E4 4,F4 1,F4 1,F4 1.5,F4 .5,F4 1,E4 1,E4 1,E4 .5,E4 .5,G4 1,G4 1,F4 1,D4 1,C4 4,- 2'},
+   {bpm:110,unit:1,notes:'G4 1,C5 1,C5 .5,D5 .5,C5 .5,B4 .5,A4 1,A4 1,A4 1,D5 1,D5 .5,E5 .5,D5 .5,C5 .5,B4 1,G4 1,G4 1,E5 1,E5 .5,F5 .5,E5 .5,D5 .5,C5 1,A4 1,G4 .5,G4 .5,A4 1,D5 1,B4 1,C5 3,- 3'},
+   {bpm:100,unit:1,notes:'G4 1.5,F4 .5,E4 1,D4 1,C4 1,D4 1,E4 1,C4 1,D4 .5,E4 .5,F4 .5,D4 .5,E4 1.5,D4 .5,C4 1,B3 1,C4 2,G4 1.5,F4 .5,E4 1,D4 1,C4 1,D4 1,E4 1,C4 1,D4 .5,E4 .5,F4 .5,D4 .5,E4 1.5,D4 .5,C4 1,B3 1,C4 2,- 2'}
+  ];
+  let ctx=null,master=null,timer=null,on=false,si=0,ni=0,nextT=0;
+  function setup(){ if(ctx) return; const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    ctx=new AC(); master=ctx.createGain(); master.gain.value=0.11;
+    const dl=ctx.createDelay(); dl.delayTime.value=.28; const fb=ctx.createGain(); fb.gain.value=.28; const wet=ctx.createGain(); wet.gain.value=.35;
+    master.connect(ctx.destination); master.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(ctx.destination); }
+  function bell(f,t,d){ [[1,1],[2,.25],[3.01,.08]].forEach(([h,a])=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type='sine'; o.frequency.value=f*h;
+      g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(a,t+.01); g.gain.exponentialRampToValueAtTime(.0008,t+Math.max(.6,d*1.6));
+      o.connect(g); g.connect(master); o.start(t); o.stop(t+Math.max(.7,d*1.7)); }); }
+  function tick(){ if(!on) return; const S=SONGS[si], list=S.notes.split(','), beat=60/S.bpm;
+    while(nextT<ctx.currentTime+.4){ const [n,b]=list[ni].trim().split(' '), d=parseFloat(b)*S.unit*beat;
+      if(n!=='-') bell(N(n),nextT,d); nextT+=d; ni++; if(ni>=list.length){ ni=0; si=(si+1)%SONGS.length; nextT+=.8; return; } } }
+  return {
+    start(){ setup(); if(!ctx) return false; ctx.resume&&ctx.resume(); if(on) return true; on=true; nextT=ctx.currentTime+.15; clearInterval(timer); timer=setInterval(tick,120); return true; },
+    stop(){ on=false; clearInterval(timer); if(ctx&&ctx.suspend) ctx.suspend(); },
+    get on(){ return on; }
+  };
+})();
+function musicPref(v){ try{ if(v===undefined) return localStorage.getItem('dyb-music'); localStorage.setItem('dyb-music',v);}catch(e){return null} }
+function paintMusic(){ $('musicBtn').classList.toggle('off',!Carol.on); $('musicBtn').querySelector('.lbl').textContent=Carol.on?'캐럴 끄기':'캐럴 켜기'; $('musicBtn').querySelector('.ico').textContent=Carol.on?'🎵':'🔇'; }
+$('musicBtn').onclick=()=>{ if(Carol.on){Carol.stop();musicPref('off')}else{Carol.start();musicPref('on')} paintMusic(); };
+document.addEventListener('visibilitychange',()=>{ if(document.hidden){ if(Carol.on){Carol.stop();window._carolWas=1} } else if(window._carolWas){window._carolWas=0;Carol.start();paintMusic()} });
 
 /* ================= SNOW ================= */
 (function(){const c=$('snow'),x=c.getContext('2d');let W,H,f=[];
