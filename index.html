@@ -947,15 +947,20 @@ function stockTag(p){
   else {c='s100';t='넉넉해요 😊'}
   return `<span class="stk ${c}">${t}</span>`;
 }
+function noticeModal(title,html,toShop){
+  showModal(`<img class="peek" src="img/xmas/cat.webp" alt=""><div class="tada" style="font-size:30px">${title}</div>
+    <p class="who" style="font-size:21px;margin-top:10px;line-height:1.45">${html}</p>
+    ${toShop?'<a class="btn green ok" href="#shop" data-close style="text-decoration:none;margin-right:6px">🛍️ 마켓 가기</a>':''}<button class="btn red ok" data-close>확인</button>`);
+}
 /* ================= RANDOM BOX ================= */
 const boxA=$('boxArea'); let opening=false;
 boxA.onclick=async()=>{
   if(opening) return;
-  if(S.user.tickets.box<1){ $('boxMsg').innerHTML='랜덤박스 참가권이 없어요! <a href="#shop" style="color:var(--green)">마켓에서 참가권 사러 가기 →</a>'; boxA.classList.add('shake'); setTimeout(()=>boxA.classList.remove('shake'),900); return; }
+  if(S.user.tickets.box<1){ $('boxMsg').innerHTML='랜덤박스 참가권이 없어요! <a href="#shop" style="color:var(--green)">마켓에서 참가권 사러 가기 →</a>'; noticeModal('🎟️ 참가권이 없어요!','랜덤박스 참가권을 마켓에서 먼저 사 주세요.<br>(1인 3장까지)',true); boxA.classList.add('shake'); setTimeout(()=>boxA.classList.remove('shake'),900); return; }
   opening=true; $('boxMsg').textContent=''; boxA.classList.add('shake');
   const [r]=await Promise.all([api('play',{game:'box'}),sleep(900)]);
   boxA.classList.remove('shake');
-  if(!r.ok){ opening=false; $('boxMsg').textContent=r.err; if(r.state) applyState(r.state); return; }
+  if(!r.ok){ opening=false; $('boxMsg').textContent=r.err; noticeModal('앗! 상자가 안 열렸어요',esc(r.err)); if(r.state) applyState(r.state); return; }
   boxA.classList.add('opened'); const rc=boxA.getBoundingClientRect(); burst(rc.left+rc.width/2,rc.top+rc.height*.4,120);
   applyState(r.state);
   setTimeout(()=>reveal(r.result.prize),550);
@@ -1005,14 +1010,14 @@ document.fonts&&document.fonts.ready.then(()=>drawWheel());
 function setRot(){wc.style.transform=`rotate(${rot}deg)`}
 $('spinBtn').onclick=async function(){
   if(spinning) return;
-  if(S.user.tickets.roul<1){ $('roulMsg').innerHTML='룰렛 참가권이 없어요! <a href="#shop" style="color:var(--green)">마켓에서 참가권 사러 가기 →</a>'; return; }
+  if(S.user.tickets.roul<1){ $('roulMsg').innerHTML='룰렛 참가권이 없어요! <a href="#shop" style="color:var(--green)">마켓에서 참가권 사러 가기 →</a>'; noticeModal('🎟️ 참가권이 없어요!','룰렛 참가권을 마켓에서 먼저 사 주세요.<br>(1인 3장까지)',true); return; }
   spinning=true; this.disabled=true; $('roulMsg').textContent='';
   let result=null, done=false;
   api('play',{game:'roul'}).then(r=>{result=r;});
   // ~1초: 0.5초 빠르게 돌다가(서버 응답 대기) 0.5초 동안 멈춤
   const t0=performance.now(); const speed=26;
   await new Promise(res=>{(function f(t){ rot+=speed; setRot(); if(result&&t-t0>=500) return res(); requestAnimationFrame(f);})(performance.now())});
-  if(!result.ok){ spinning=false; this.disabled=false; $('roulMsg').textContent=result.err; if(result.state) applyState(result.state); return; }
+  if(!result.ok){ spinning=false; this.disabled=false; $('roulMsg').textContent=result.err; noticeModal('앗! 룰렛이 멈췄어요',esc(result.err)); if(result.state) applyState(result.state); return; }
   const n=S.roul.length, i=result.result.index, segA=360/n;
   const want=-(i*segA+segA/2)+(Math.random()-.5)*segA*.6;
   let target=rot+200; target=target-((target%360)+360)%360+((want%360)+360)%360; if(target<rot+200) target+=360;
