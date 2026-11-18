@@ -1101,13 +1101,17 @@ function sweepBad(text){
   $('pvBadge').hidden=!PREVIEW;
   const saved=ss('dyb-me'); if(saved){try{const o=JSON.parse(saved);$('inName').value=o.name||'';$('inPw').value=o.pw||''}catch(e){}}
 })();
+/* 첫 접속이 느리지 않게 서버를 미리 깨워 둬요 */
+function warmUp(){ if(PREVIEW||!API_URL) return; try{ fetch(API_URL,{method:'GET',mode:'no-cors',cache:'no-store'}).catch(()=>{}); }catch(e){} }
+warmUp(); const warmT=setInterval(()=>{ if($('intro').style.display!=='none') warmUp(); else clearInterval(warmT); }, 240000);
+$('inName').addEventListener('focus',warmUp,{once:true});
 $('sign').addEventListener('submit',async e=>{
   e.preventDefault();
   if(musicPref()!=='off'){ Carol.start(); } paintMusic();
   me={name:$('inName').value.trim(),pw:$('inPw').value.trim()};
   if(!me.name||!me.pw){$('loginErr').textContent='이름과 초대장 번호를 모두 넣어 줘!';$('signBoard').classList.remove('shake');void $('signBoard').offsetWidth;$('signBoard').classList.add('shake');return}
-  $('loginErr').textContent='확인 중...';
-  const r=await api('login');
+  $('loginErr').textContent=''; loading(true,'산타가 초대장을 확인하고 있어요... 🎅');
+  const r=await api('login'); loading(false);
   if(!r.ok){$('loginErr').textContent=r.err;$('signBoard').classList.remove('shake');void $('signBoard').offsetWidth;$('signBoard').classList.add('shake');return}
   ss('dyb-me',JSON.stringify(me)); $('loginErr').textContent='';
   applyState(r.state); $('app').classList.add('on'); show(location.hash.slice(1));

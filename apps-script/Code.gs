@@ -98,8 +98,8 @@ function E_state(db, u){
   var name = E_str(u['이름']);
   return {
     user: { name: name, points: E_num(u['포인트']), tickets: E_tickets(db,u), grade: E_str(u['학년']), teacher: E_str(u['담임']) },
-    items: db.items.filter(function(i){ return E_str(i['ID']) !== ''; }).map(function(i){ var id=E_str(i['ID']); return { off: !E_onSale(i),
-      id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:E_stock(db,i).day, base:E_stock(db,i).base,
+    items: db.items.filter(function(i){ return E_str(i['ID']) !== ''; }).map(function(i){ var id=E_str(i['ID']), st=E_stock(db,i); return { off: !E_onSale(i),
+      id:id, cat:E_str(i['카테고리']), name:E_str(i['이름']), price:E_num(i['가격']), stock:st.day, base:st.base,
       limit:E_limit(i), img:E_str(i['이미지']), desc:E_str(i['설명']), mine:E_bought(db,u,id) }; }),
     box: db.box.filter(function(b){ return E_str(b['상품명']); }).map(function(b){ var l = E_num(b['남은수량']); return {grade:E_str(b['등급']), name:E_str(b['상품명']), img:E_str(b['이미지']), left:l, init:Math.max(E_num(b['처음수량']), l)}; }),
     roul: db.roul.filter(function(r){ return E_str(r['상품명']); }).map(function(r){ return {name:E_str(r['상품명']), img:E_str(r['이미지']), left:E_num(r['남은수량'])}; }),
@@ -234,7 +234,13 @@ function E_seedItems(){ return SEED.items.map(function(r){ var o = {}; SEED_ITEM
   return HEADERS.items.map(function(k){ return o[k] === undefined ? '' : o[k]; }); }); }
 function E_day(t){ return E_str(t).slice(0,5); }   // '12/17 10:00:00' → '12/17'
 function E_sold(db, id, today){
-  return db.orders.reduce(function(s,o){ return (E_str(o['상품ID']) === id && (!today || E_day(o['시간']) === today)) ? s + E_num(o['수량']) : s; }, 0);
+  if (!db._soldAll || db._soldN !== db.orders.length) {
+    db._soldAll = {}; db._soldDay = {}; db._soldN = db.orders.length;
+    db.orders.forEach(function(o){ var k = E_str(o['상품ID']), q = E_num(o['수량']);
+      db._soldAll[k] = (db._soldAll[k] || 0) + q;
+      if (E_day(o['시간']) === db.today) db._soldDay[k] = (db._soldDay[k] || 0) + q; });
+  }
+  return (today ? db._soldDay[id] : db._soldAll[id]) || 0;
 }
 function E_stock(db, i){
   var id = E_str(i['ID']), init = E_num(i['초기재고']), cur = Math.max(0, init - E_sold(db, id));
@@ -328,7 +334,7 @@ function doPost(e) {
   try {
     if (write) lock.waitLock(25000);
     var db = loadDB_(), now = Utilities.formatDate(new Date(), 'Asia/Seoul', 'MM/dd HH:mm:ss'), res = { ok: true };
-    writeStock_(db);
+    try { var P = PropertiesService.getScriptProperties(); if (P.getProperty('stockDay') !== db.today) { writeStock_(db); P.setProperty('stockDay', db.today); } } catch (x) {}
     if (req.action === 'login' || req.action === 'state') {
       res.state = E_state(db, E_findUser(db, req.name, req.pw));
     } else if (req.action === 'order') {
