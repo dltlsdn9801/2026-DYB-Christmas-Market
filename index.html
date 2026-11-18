@@ -222,6 +222,16 @@ section.view.on{display:block}
 .stock{margin-top:6px}.stock .stk{margin:0 auto;font-size:16px}
 .stock.low{color:var(--deep)}
 .limit-badge{position:absolute;top:-12px;right:8px;white-space:nowrap;background:var(--green2);color:#fff;border:2px solid var(--line);border-radius:999px;font-size:14px;padding:2px 8px 0;z-index:2}
+.card.is-sold{background:#d6d2cf;filter:grayscale(1);box-shadow:0 6px 0 #6e6560}
+.card.is-sold .pic{background:#e9e6e3}
+.card.is-sold:hover{transform:none}
+.card.is-sold .pic img{opacity:.55}
+.soldtxt{display:inline-block;background:#8a817a;color:#fff;border:2px solid var(--line);border-radius:999px;padding:3px 14px 1px;font-size:17px}
+.hot{position:absolute;top:-34px;left:-14px;width:72px;height:86px;z-index:4;pointer-events:none;animation:flick 1s ease-in-out infinite;transform-origin:50% 90%}
+.hot svg{width:100%;height:100%;filter:drop-shadow(0 4px 0 rgba(0,0,0,.2))}
+.hot b{position:absolute;left:0;right:0;top:46px;text-align:center;font-weight:400;font-size:17px;color:#b50005;-webkit-text-stroke:3px #fff;paint-order:stroke fill;rotate:-8deg}
+@keyframes flick{0%,100%{transform:scale(1) rotate(-4deg)}50%{transform:scale(1.08) rotate(4deg)}}
+.card.is-hot{box-shadow:0 6px 0 var(--line),0 0 22px 4px rgba(255,140,40,.55)}
 .soldout{position:absolute;inset:0;background:rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;z-index:3}
 .soldout span{background:var(--deep);color:#fff;border:3px solid var(--line);border-radius:12px;font-size:26px;padding:4px 16px 2px;rotate:-12deg}
 .stepper{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
@@ -382,6 +392,7 @@ section.view.on{display:block}
 }
 /* ---------------- BONUS ---------------- */
 .bonus-head{display:flex;align-items:center;gap:16px;background:var(--cream);border:3px solid var(--line);border-radius:28px;box-shadow:0 6px 0 var(--line);padding:16px 24px;margin:6px 0 0}
+.bonus-head img.scarf{width:clamp(110px,16vw,180px);animation:none}
 .bonus-head img{width:120px;flex:none;animation:bob 2.4s infinite}
 .bonus-head h3{font-size:clamp(29px,5.5vw,40px);color:var(--deep)}
 .bonus-head p{font-size:clamp(20px,4.0vw,24px)}
@@ -446,6 +457,7 @@ footer{position:relative;z-index:2;margin-top:70px}
 .hill{height:60px;background:#fff;border-top:3px solid var(--line);border-radius:50% 50% 0 0/100% 100% 0 0}
 .foot{background:#fff;padding:0 16px 22px;text-align:center}
 .foot .cheer{width:min(460px,90vw);margin:-110px auto 4px}
+.foot .merry{width:min(420px,84vw);margin:-20px auto 0;position:relative}
 .foot .school{height:42px;width:auto;margin:6px auto 4px}
 .foot small{color:#999;font-size:15px;font-family:sans-serif}
 </style>
@@ -599,7 +611,6 @@ footer{position:relative;z-index:2;margin-top:70px}
           <img class="mascot" src="img/xmas/turtle_happy.webp" alt="">
         </div>
       </div>
-      <div class="popular" id="popular"></div>
       <div id="shopCats"></div>
     </section>
 
@@ -652,7 +663,7 @@ footer{position:relative;z-index:2;margin-top:70px}
     <!-- BONUS -->
     <section class="view" id="v-bonus">
       <div class="bonus-head">
-        <img src="img/xmas/rabbit_flower.webp" alt="">
+        <img src="img/ch/scarf.webp" alt="" class="scarf">
         <div><h3>추가 포인트 받기 💝</h3><p class="hand">담임선생님께 편지를 쓰면 <b id="lpBig">1,000</b> 포인트를 받아요!</p></div>
       </div>
 
@@ -690,7 +701,7 @@ footer{position:relative;z-index:2;margin-top:70px}
   <footer>
     <div class="hill"></div>
     <div class="foot">
-      <img class="cheer" src="img/ch/cheer.webp" alt="Cheer up! You can make it!">
+      <img class="cheer merry" src="img/ch/merry.webp" alt="Merry Christmas">
       <img class="school" src="img/ch/dyb_school.webp" alt="DYB 최선어학원">
       <small>DYB 대치본원 · Merry Christmas!</small>
     </div>
@@ -746,6 +757,7 @@ function mockInit(){
   [['potato',6],['ring',4],['damla',9],['pencil',3]].forEach(([id,q],k)=>mockDB.orders.push({'시간':'12/17 09:5'+k+':00','주문번호':'D1'+k,'이름':'샘플','상품ID':id,'상품명':id,'수량':q,'단가':0,'금액':0,'주문후포인트':0}));
   mockDB.wins.push({'시간':'12/17 09:40:00','이름':'정도윤','게임':'랜덤박스','등급':'1등','상품명':'배달의민족 3만원권','이미지':'baemin','학생코드':''});
   mockDB.box[0]['남은수량']=0;
+  mockDB.items.find(i=>i['ID']==='nemo')['판매']='N';
   mockDB.users.forEach((u,i)=>{u['학년']=['4학년','5학년','6학년'][i%3];u['담임']=['박','최','이'][i%3]+'선생'});
   [['이서연','떡볶이가 진짜 맛있었어요!! 또 해 주세요 🌶️'],['박지호','선생님들 항상 감사합니다 ❤️'],['최하은','룰렛 돌리는 거 너무 재밌어요ㅎㅎ']].forEach(([n,t],k)=>
     mockDB.comments.push({'시간':`12/17 10:1${k}:00`,'학년':'','이름':n,'내용':t,'상태':'','학생코드':''}));
@@ -785,7 +797,7 @@ function loading(on,txt){ $('loading').classList.toggle('on',!!on); if(txt) $('l
 let me={name:'',pw:''}, S=null, cart={};
 const CATMETA={
   '참가권':{t:'Game Tickets',d:'룰렛·랜덤박스·가위바위보 참가권',ch:'chick',say:'게임 티켓은 3개까지만!'},
-  '쿠폰':{t:'Coupons',d:'숙제·시험 면제권 (종류별 1장씩!)',ch:'cat_fish',say:'선생님 사인 꼭 받아!'},
+  '쿠폰':{t:'Coupons',d:'숙제·시험 면제권 (종류별 1장씩!)',ch:'cat_fish',say:'선생님 허락 받고 사용해줘!'},
   '간식':{t:'Snack',d:'달콤 바삭 크리스마스 간식',ch:'hamster_magni',say:'냠냠, 뭐 먹을까?'},
   '문구':{t:'Stationery',d:'귀여운 크리스마스 문구',ch:'rabbit_flower',say:'크리스마스 문구 GET!'},
 };
@@ -798,12 +810,13 @@ function applyState(st){
   $('wBox').textContent=st.user.tickets.box; $('wRoul').textContent=st.user.tickets.roul;
   $('tBox').textContent=st.user.tickets.box; $('tRoul').textContent=st.user.tickets.roul;
   // drop cart lines that no longer exist
-  Object.keys(cart).forEach(id=>{ if(!st.items.find(i=>i.id===id)) delete cart[id]; });
-  renderShop(); renderPopular(); renderCart(); renderWinners(); renderBonus(); if(!spinning) drawWheel(0);
+  Object.keys(cart).forEach(id=>{ const it=st.items.find(i=>i.id===id); if(!it||it.off||it.stock<=0) delete cart[id]; });
+  renderShop(); renderCart(); renderWinners(); renderBonus(); if(!spinning) drawWheel(0);
 }
 
 /* ================= SHOP ================= */
 function maxAddable(it){
+  if(it.off) return 0;
   let m=it.stock;
   if(it.limit>0) m=Math.min(m,it.limit-it.mine);
   return Math.max(0,m);
@@ -819,13 +832,13 @@ function renderShop(){
   }).join('');
 }
 function cardHTML(it){
-  const q=cart[it.id]||0, max=maxAddable(it), sold=it.stock<=0;
+  const q=cart[it.id]||0, max=maxAddable(it), sold=it.off||it.stock<=0, hot=!sold&&(S.popular||[]).some(p=>p.id===it.id);
   const limTxt=it.limit>0?`<span class="limit-badge">${it.mine>=it.limit?'구매 완료 ✓':`1인 ${it.limit}개${it.limit>1?` · ${it.mine}/${it.limit}`:''}`}</span>`:'';
-  return `<div class="card">${limTxt}
-    <div class="pic"><img src="${imgSrc(it.img)}" alt="${esc(it.name)}" onerror="${IMG_FALLBACK}">${sold?'<div class="soldout"><span>품절</span></div>':''}</div>
+  return `<div class="card ${sold?'is-sold':''} ${hot?'is-hot':''}">${hot?'<span class="hot"><svg viewBox="0 0 60 72"><path d="M30 2C34 18 50 24 52 44C54 62 42 70 30 70C16 70 6 60 8 44C9 34 16 30 18 20C24 28 24 34 28 36C30 24 26 14 30 2Z" fill="#ff6a2b" stroke="#2b1a14" stroke-width="3.5" stroke-linejoin="round"/><path d="M30 30C33 40 42 44 42 54C42 63 36 66 30 66C23 66 18 61 19 53C20 47 24 46 26 40C28 44 29 46 30 46Z" fill="#ffd23d"/></svg><b>인기!</b></span>':''}${limTxt}
+    <div class="pic"><img src="${imgSrc(it.img)}" alt="${esc(it.name)}" onerror="${IMG_FALLBACK}"></div>
     <div class="name">${esc(it.name)}${it.desc?`<button class="info" data-desc="${esc(it.desc)}" data-nm="${esc(it.name)}" aria-label="설명 보기">?</button>`:''}</div>
     <span class="tag">${won(it.price)}원</span>
-    <div class="stock">${stockTag({left:it.stock,init:it.base||it.stock})}</div>
+    <div class="stock">${sold?'<span class="soldtxt">선물이 매진되었어요.</span>':stockTag({left:it.stock,init:it.base||it.stock})}</div>
     ${sold?'':`<div class="stepper"><button data-id="${it.id}" data-d="-1" ${q<=0?'disabled':''}>−</button><span class="q">${q}</span><button class="plus" data-id="${it.id}" data-d="1" ${q>=max?'disabled':''}>+</button></div>`}
   </div>`;
 }
@@ -950,7 +963,7 @@ boxA.onclick=async()=>{
 function resetBox(){ if(!opening) return; boxA.classList.remove('opened'); opening=false; }
 const PEEKS=['rabbit','whale','turtle_happy','hamster','cat','chick'];
 function reveal(p){
-  const jack=p.grade==='1등';
+  const jack=p.grade==='1등'; Sfx.fanfare(jack);
   showModal(`<img class="peek" src="img/xmas/${PEEKS[Math.floor(Math.random()*PEEKS.length)]}.webp" alt="">
     <div class="tada">🎉 ${jack?'대박!! 1등!!':'짜잔!'} 🎉</div><p class="who">${esc(S.user.name)} 님 당첨!</p>
     <div class="rpic"><img src="${imgSrc(p.img)}" alt="" onerror="${IMG_FALLBACK}"></div>
@@ -996,16 +1009,15 @@ $('spinBtn').onclick=async function(){
   spinning=true; this.disabled=true; $('roulMsg').textContent='';
   let result=null, done=false;
   api('play',{game:'roul'}).then(r=>{result=r;});
-  // free spin until server answers
-  let speed=6; const t0=performance.now();
-  await new Promise(res=>{(function f(t){ speed=Math.min(22,speed+1.2); rot+=speed; setRot();
-    if(result&&t-t0>300) return res(); requestAnimationFrame(f);})(performance.now())});
+  // ~1초: 0.5초 빠르게 돌다가(서버 응답 대기) 0.5초 동안 멈춤
+  const t0=performance.now(); const speed=26;
+  await new Promise(res=>{(function f(t){ rot+=speed; setRot(); if(result&&t-t0>=500) return res(); requestAnimationFrame(f);})(performance.now())});
   if(!result.ok){ spinning=false; this.disabled=false; $('roulMsg').textContent=result.err; if(result.state) applyState(result.state); return; }
   const n=S.roul.length, i=result.result.index, segA=360/n;
   const want=-(i*segA+segA/2)+(Math.random()-.5)*segA*.6;
-  let target=rot+360*2; target=target-((target%360)+360)%360+((want%360)+360)%360; if(target<rot+360) target+=360;
-  const start=rot, dist=target-start, dur=950, ts=performance.now();
-  await new Promise(res=>{(function f(t){const p=Math.min(1,(t-ts)/dur), e=1-Math.pow(1-p,4); rot=start+dist*e; setRot(); if(p<1) requestAnimationFrame(f); else res();})(ts)});
+  let target=rot+200; target=target-((target%360)+360)%360+((want%360)+360)%360; if(target<rot+200) target+=360;
+  const start=rot, dist=target-start, dur=500, ts=performance.now();
+  await new Promise(res=>{(function f(t){const p=Math.min(1,(t-ts)/dur), e=1-Math.pow(1-p,3); rot=start+dist*e; setRot(); if(p<1) requestAnimationFrame(f); else res();})(ts)});
   spinning=false; this.disabled=false;
   applyState(result.state); reveal(result.result.prize);
 };
@@ -1043,7 +1055,7 @@ $('letterForm').addEventListener('submit',async e=>{
   if(!r.ok){$('lMsg').textContent=r.err; return}
   $('letterForm').classList.add('flyaway');
   setTimeout(()=>{ $('letterForm').classList.remove('flyaway'); $('lText').value=''; $('lTeacher').value=''; $('lLen').textContent='0'; applyState(r.state);
-    showModal(`<img class="peek" src="img/xmas/rabbit_flower.webp" alt=""><div class="tada" style="font-size:36px">💌 편지 도착!</div>
+    showModal(`<img class="peek" src="img/ch/scarf.webp" alt="" style="width:170px"><div class="tada" style="font-size:36px">💌 편지 도착!</div>
       <p class="who" style="font-size:22px;margin-top:10px">${esc(josaName(r.result.writer))} 편지는<br>${esc(r.result.teacher||'')} 선생님께 전달드릴게요!</p>
       ${r.result.reward?`<div class="ono" style="border-color:var(--green2);color:var(--green)">+ ${won(r.result.reward)} 포인트 💰</div>`:'<p class="who" style="font-size:16px;color:#9a7a6a">(편지 포인트는 이미 받았어요)</p>'}
       <button class="btn red ok" data-close>확인</button>`,true);
@@ -1109,20 +1121,21 @@ document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&S) refre
 
 /* ================= CAROL (music box, public-domain melodies) ================= */
 const Carol=(function(){
-  const N=n=>{const m={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[n[0]]+(n[1]==='#'?1:0),o=+n.slice(-1);return 440*Math.pow(2,(m+12*(o+1)-69)/12)};
+  const N=n=>{const m={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[n[0]]+(n[1]==='#'?1:0),o=+n.slice(-1);return 2*440*Math.pow(2,(m+12*(o+1)-69)/12)};
   // [note, beats]  ('-' = rest)
-  const SONGS=[
-   {bpm:120,unit:.5,notes:'G4 3,A4 1,G4 2,E4 6,G4 3,A4 1,G4 2,E4 6,D5 4,D5 2,B4 6,C5 4,C5 2,G4 6,A4 4,A4 2,C5 3,B4 1,A4 2,G4 3,A4 1,G4 2,E4 6,A4 4,A4 2,C5 3,B4 1,A4 2,G4 3,A4 1,G4 2,E4 6,D5 4,D5 2,F5 3,D5 1,B4 2,C5 6,E5 6,C5 3,G4 1,E4 2,G4 3,F4 1,D4 2,C4 12,- 6'},
-   {bpm:112,unit:1,notes:'E4 1,E4 1,E4 2,E4 1,E4 1,E4 2,E4 1,G4 1,C4 1.5,D4 .5,E4 4,F4 1,F4 1,F4 1.5,F4 .5,F4 1,E4 1,E4 1,E4 .5,E4 .5,E4 1,D4 1,D4 1,E4 1,D4 2,G4 2,E4 1,E4 1,E4 2,E4 1,E4 1,E4 2,E4 1,G4 1,C4 1.5,D4 .5,E4 4,F4 1,F4 1,F4 1.5,F4 .5,F4 1,E4 1,E4 1,E4 .5,E4 .5,G4 1,G4 1,F4 1,D4 1,C4 4,- 2'},
-   {bpm:110,unit:1,notes:'G4 1,C5 1,C5 .5,D5 .5,C5 .5,B4 .5,A4 1,A4 1,A4 1,D5 1,D5 .5,E5 .5,D5 .5,C5 .5,B4 1,G4 1,G4 1,E5 1,E5 .5,F5 .5,E5 .5,D5 .5,C5 1,A4 1,G4 .5,G4 .5,A4 1,D5 1,B4 1,C5 3,- 3'},
-   {bpm:100,unit:1,notes:'G4 1.5,F4 .5,E4 1,D4 1,C4 1,D4 1,E4 1,C4 1,D4 .5,E4 .5,F4 .5,D4 .5,E4 1.5,D4 .5,C4 1,B3 1,C4 2,G4 1.5,F4 .5,E4 1,D4 1,C4 1,D4 1,E4 1,C4 1,D4 .5,E4 .5,F4 .5,D4 .5,E4 1.5,D4 .5,C4 1,B3 1,C4 2,- 2'}
+  const SONGS0=[
+   {bpm:150,unit:.5,notes:'G4 3,A4 1,G4 2,E4 6,G4 3,A4 1,G4 2,E4 6,D5 4,D5 2,B4 6,C5 4,C5 2,G4 6,A4 4,A4 2,C5 3,B4 1,A4 2,G4 3,A4 1,G4 2,E4 6,A4 4,A4 2,C5 3,B4 1,A4 2,G4 3,A4 1,G4 2,E4 6,D5 4,D5 2,F5 3,D5 1,B4 2,C5 6,E5 6,C5 3,G4 1,E4 2,G4 3,F4 1,D4 2,C4 12,- 6'},
+   {bpm:150,unit:1,notes:'E4 1,E4 1,E4 2,E4 1,E4 1,E4 2,E4 1,G4 1,C4 1.5,D4 .5,E4 4,F4 1,F4 1,F4 1.5,F4 .5,F4 1,E4 1,E4 1,E4 .5,E4 .5,E4 1,D4 1,D4 1,E4 1,D4 2,G4 2,E4 1,E4 1,E4 2,E4 1,E4 1,E4 2,E4 1,G4 1,C4 1.5,D4 .5,E4 4,F4 1,F4 1,F4 1.5,F4 .5,F4 1,E4 1,E4 1,E4 .5,E4 .5,G4 1,G4 1,F4 1,D4 1,C4 4,- 2'},
+   {bpm:150,unit:1,notes:'G4 1,C5 1,C5 .5,D5 .5,C5 .5,B4 .5,A4 1,A4 1,A4 1,D5 1,D5 .5,E5 .5,D5 .5,C5 .5,B4 1,G4 1,G4 1,E5 1,E5 .5,F5 .5,E5 .5,D5 .5,C5 1,A4 1,G4 .5,G4 .5,A4 1,D5 1,B4 1,C5 3,- 3'},
+   {bpm:136,unit:1,notes:'G4 1.5,F4 .5,E4 1,D4 1,C4 1,D4 1,E4 1,C4 1,D4 .5,E4 .5,F4 .5,D4 .5,E4 1.5,D4 .5,C4 1,B3 1,C4 2,G4 1.5,F4 .5,E4 1,D4 1,C4 1,D4 1,E4 1,C4 1,D4 .5,E4 .5,F4 .5,D4 .5,E4 1.5,D4 .5,C4 1,B3 1,C4 2,- 2'}
   ];
+  const SONGS=[SONGS0[1],SONGS0[2],SONGS0[3],SONGS0[0]];
   let ctx=null,master=null,timer=null,on=false,si=0,ni=0,nextT=0;
   function setup(){ if(ctx) return; const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
-    ctx=new AC(); master=ctx.createGain(); master.gain.value=0.11;
+    ctx=new AC(); master=ctx.createGain(); master.gain.value=0.085;
     const dl=ctx.createDelay(); dl.delayTime.value=.28; const fb=ctx.createGain(); fb.gain.value=.28; const wet=ctx.createGain(); wet.gain.value=.35;
     master.connect(ctx.destination); master.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(ctx.destination); }
-  function bell(f,t,d){ [[1,1],[2,.25],[3.01,.08]].forEach(([h,a])=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type='sine'; o.frequency.value=f*h;
+  function bell(f,t,d){ [[1,1],[2,.3],[3.01,.12],[4.2,.05]].forEach(([h,a])=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type='sine'; o.frequency.value=f*h;
       g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(a,t+.01); g.gain.exponentialRampToValueAtTime(.0008,t+Math.max(.6,d*1.6));
       o.connect(g); g.connect(master); o.start(t); o.stop(t+Math.max(.7,d*1.7)); }); }
   function tick(){ if(!on) return; const S=SONGS[si], list=S.notes.split(','), beat=60/S.bpm;
@@ -1130,10 +1143,24 @@ const Carol=(function(){
       if(n!=='-') bell(N(n),nextT,d); nextT+=d; ni++; if(ni>=list.length){ ni=0; si=(si+1)%SONGS.length; nextT+=.8; return; } } }
   return {
     start(){ setup(); if(!ctx) return false; ctx.resume&&ctx.resume(); if(on) return true; on=true; nextT=ctx.currentTime+.15; clearInterval(timer); timer=setInterval(tick,120); return true; },
+    ctx:()=>{setup();return ctx},
     stop(){ on=false; clearInterval(timer); if(ctx&&ctx.suspend) ctx.suspend(); },
     get on(){ return on; }
   };
 })();
+/* ================= SFX: 따단~ fanfare ================= */
+const Sfx={ fanfare(big){ const ctx=Carol.ctx(); if(!ctx) return; ctx.resume&&ctx.resume();
+  const out=ctx.createGain(); out.gain.value=.22; out.connect(ctx.destination); const t=ctx.currentTime+.03;
+  const note=(f,st,len,type='square',v=.5)=>{ const o=ctx.createOscillator(),g=ctx.createGain(); o.type=type; o.frequency.value=f;
+    g.gain.setValueAtTime(0,t+st); g.gain.linearRampToValueAtTime(v,t+st+.015); g.gain.setValueAtTime(v,t+st+len*.7); g.gain.exponentialRampToValueAtTime(.001,t+st+len);
+    o.connect(g); g.connect(out); o.start(t+st); o.stop(t+st+len+.05); };
+  // 따-단~  (G5 짧게 → C6 길게 + 화음)
+  note(784,0,.14,'square',.35); note(1047,.16,big?1.1:.75,'square',.35);
+  [1319,1568].forEach(f=>note(f,.16,big?1.1:.75,'triangle',.28));
+  note(523,.16,big?1.1:.75,'triangle',.3);
+  if(big){ [1568,1760,2093,2637].forEach((f,i)=>note(f,1.0+i*.08,.25,'triangle',.25)); }
+  for(let i=0;i<6;i++) note(2093*Math.pow(2,i/12*2),.2+i*.05,.18,'sine',.12);
+}};
 function musicPref(v){ try{ if(v===undefined) return localStorage.getItem('dyb-music'); localStorage.setItem('dyb-music',v);}catch(e){return null} }
 function paintMusic(){ $('musicBtn').classList.toggle('off',!Carol.on); $('musicBtn').querySelector('.lbl').textContent=Carol.on?'캐럴 끄기':'캐럴 켜기'; $('musicBtn').querySelector('.ico').textContent=Carol.on?'🎵':'🔇'; }
 $('musicBtn').onclick=()=>{ if(Carol.on){Carol.stop();musicPref('off')}else{Carol.start();musicPref('on')} paintMusic(); };
